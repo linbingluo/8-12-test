@@ -10,6 +10,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  /* 添加自定义尺寸 */
+  --width-280px: 280px;
+  --spacing-280px: 280px;
 }
 
 @media (prefers-color-scheme: dark) {
