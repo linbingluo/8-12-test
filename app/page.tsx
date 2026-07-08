@@ -11,7 +11,7 @@ export default function LandingPage() {
     const userData = localStorage.getItem('user');
     if (userData) {
       // 已登录用户直接进入登录后页面
-      router.replace('/'); // 如果你有 /dashboard，也可以改成 /dashboard
+      router.replace('/home'); // 如果你有 /dashboard，也可以改成 /dashboard
     }
   }, [router]);
 

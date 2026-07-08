@@ -7,7 +7,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const menuItems = [
-    { href: "/", label: "首页", icon: "🏠" },
+    { href: "/home", label: "首页", icon: "🏠" },
     { href: "/trips", label: "我的计划", icon: "✈️" },
     { href: "/destinations", label: "目的地", icon: "🌍" },
     { href: "/favorites", label: "收藏", icon: "❤️" },

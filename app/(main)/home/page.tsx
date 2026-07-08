@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CreateTripModal from '../components/CreateTripModel';
-import StatCard from '../components/StatCard';
-import TripCard from '../components/TripCard';
+import CreateTripModal from '../../components/CreateTripModel';
+import StatCard from '../../components/StatCard';
+import TripCard from '../../components/TripCard';
 import EditTripModal from '@/app/components/EditTripModal';
-import { getStats, getRecentTrips, deleteTrip } from '../lib/api';
+import { getStats, getRecentTrips, deleteTrip } from '../../lib/api';
 
 type User = {
   id: number;
@@ -121,7 +121,6 @@ export default function MainHomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* 页面头部 */}
         <div className="flex items-start justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">首页</h1>
@@ -135,7 +134,6 @@ export default function MainHomePage() {
           </button>
         </div>
 
-        {/* Hero 卡片 */}
         <div className="bg-white rounded-xl border border-gray-200 p-10 mb-8 flex gap-12">
           <div className="flex-1">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">开始你的下一次冒险</h2>
@@ -159,7 +157,6 @@ export default function MainHomePage() {
           </div>
         </div>
 
-        {/* 统计卡片 */}
         {loading ? (
           <div className="text-center py-12 text-gray-600">加载中...</div>
         ) : (
@@ -170,7 +167,6 @@ export default function MainHomePage() {
           </div>
         )}
 
-        {/* 最近计划 */}
         <div className="mb-8">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">最近的计划</h2>
@@ -255,7 +251,7 @@ export default function MainHomePage() {
             <div className="text-center py-12 text-gray-500">
               {searchQuery
                 ? `没有找到包含 "${searchQuery}" 的计划`
-                : "还没有计划，点击“开始规划”创建一个"}
+                : '还没有计划，点击“开始规划”创建一个'}
             </div>
           )}
         </div>

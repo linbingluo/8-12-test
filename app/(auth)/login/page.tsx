@@ -31,8 +31,8 @@ export default function LoginPage() {
        //Check if it is successful
        if (data.message === 'Login successful' || data.message === '登录成功') {
         localStorage.setItem('user', JSON.stringify(data.user));
-        console.log('登录成功，准备跳转到 /profile');
-        router.replace('/profile');
+        console.log('登录成功，准备跳转到 /home');
+        router.replace('/home');
        } else {
         setError(data.message || 'Login failed');
        }

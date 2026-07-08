@@ -92,7 +92,7 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">个人资料</h1>
-          <Link href="/" className="text-blue-500 hover:text-blue-600">
+          <Link href="/home" className="text-blue-500 hover:text-blue-600">
             返回首页
           </Link>
         </div>
