@@ -24,7 +24,7 @@ export default function ProfilePage() {
       setEmail(parsedUser.email);
     } else {
       // 如果没有登录，跳转到登录页面
-      router.push('/login');
+      router.replace('/login');
     }
   }, [router]);
 
@@ -74,7 +74,7 @@ export default function ProfilePage() {
     // 清空本地存储
     localStorage.removeItem('user');
     // 跳转到登录页面
-    router.push('/login');
+    router.replace('/');
   };
 
   if (!user) {

@@ -187,7 +187,7 @@ def login(user: UserLogin):
     db.close()
     
     return {
-        "message": "登录成功",
+        "message": "Login successful",
         "user": {
             "id": db_user.id,
             "email": db_user.email,

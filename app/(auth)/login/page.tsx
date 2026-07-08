@@ -29,11 +29,10 @@ export default function LoginPage() {
        });
        const data = await response.json();
        //Check if it is successful
-       if(data.message === 'Login successful') {
+       if (data.message === 'Login successful' || data.message === '登录成功') {
         localStorage.setItem('user', JSON.stringify(data.user));
         console.log('登录成功，准备跳转到 /profile');
-        // router.push('/profile');
-        window.location.href = 'http://localhost:3000/';
+        router.replace('/profile');
        } else {
         setError(data.message || 'Login failed');
        }
