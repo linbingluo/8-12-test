@@ -31,7 +31,7 @@ export default function LoginPage() {
        //Check if it is successful
        if (data.message === 'Login successful' || data.message === '登录成功') {
         localStorage.setItem('user', JSON.stringify(data.user));
-        console.log('登录成功，准备跳转到 /home');
+        console.log('Login successful, preparing to redirect to /home');
         router.replace('/home');
        } else {
         setError(data.message || 'Login failed');
@@ -45,7 +45,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">登录</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -56,28 +56,28 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              邮箱
+              Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              placeholder="输入邮箱"
+              placeholder="Enter your email"
               required
             />
           </div>
 
           <div className="mb-6">
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              密码
+              Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              placeholder="输入密码"
+              placeholder="Enter your password"
               required
             />
           </div>
@@ -87,15 +87,15 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
           >
-            {loading ? '登录中...' : '登录'}
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
         <div className="mt-4 text-center">
           <p className="text-gray-600 text-sm">
-            还没有账户？{' '}
+            Don't have an account?{' '}
             <Link href="/register" className="text-blue-500 hover:text-blue-600">
-              注册
+              Register
             </Link>
           </p>
         </div>

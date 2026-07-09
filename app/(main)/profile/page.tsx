@@ -35,22 +35,20 @@ export default function ProfilePage() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/auth/update-profile', {
+      const response = await fetch(`http://localhost:8000/user/${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: user.id,
           username: username,
-          email: email,
           password: password || undefined,
         }),
       });
 
       const data = await response.json();
 
-      if (data.message === '更新成功') {
+      if (data.message === '修改成功') {
         setSuccess('资料已更新！');
         // 更新本地存储
         localStorage.setItem('user', JSON.stringify({
