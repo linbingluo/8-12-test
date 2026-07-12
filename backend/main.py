@@ -132,26 +132,26 @@ class TripResponse(BaseModel):
 # ===== User Routes =====
 @app.post("/auth/register")
 def register(user: UserRegister):
-    """用户注册"""
+    """User Registration"""
     db = SessionLocal()
     
-    # 检查邮箱是否已注册
+    # Check if the email is already registered.
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
         db.close()
-        return {"error": "邮箱已被注册"}
+        return {"error": "Email is already registered"}
     
-    # 检查用户名是否已存在
+    # Check if the username already exists
     existing_username = db.query(User).filter(User.username == user.username).first()
     if existing_username:
         db.close()
-        return {"error": "用户名已存在"}
+        return {"error": "Username already exists"}
     
-    # 创建新用户
+    # Create a new user
     db_user = User(
         email=user.email,
         username=user.username,
-        password=user.password  # 暂时不加密
+        password=user.password  # Not encrypted for now
     )
     db.add(db_user)
     db.commit()
@@ -159,7 +159,7 @@ def register(user: UserRegister):
     db.close()
     
     return {
-        "message": "注册成功",
+        "message": "Registration successful",
         "user": {
             "id": db_user.id,
             "email": db_user.email,
@@ -169,20 +169,20 @@ def register(user: UserRegister):
 
 @app.post("/auth/login")
 def login(user: UserLogin):
-    """用户登录"""
+    """User Login"""
     db = SessionLocal()
     
-    # 查找用户
+    # Find the user
     db_user = db.query(User).filter(User.email == user.email).first()
     
     if not db_user:
         db.close()
-        return {"error": "邮箱不存在"}
+        return {"error": "Email does not exist"}
     
-    # 验证密码
+    # Verify password
     if db_user.password != user.password:
         db.close()
-        return {"error": "密码错误"}
+        return {"error": "Incorrect password"}
     
     db.close()
     
@@ -197,13 +197,13 @@ def login(user: UserLogin):
 
 @app.get("/user/{user_id}")
 def get_user(user_id: int):
-    """获取用户信息"""
+    """Get user information"""
     db = SessionLocal()
     user = db.query(User).filter(User.id == user_id).first()
     db.close()
     
     if not user:
-        return {"error": "用户不存在"}
+        return {"error": "User does not exist"}
     
     return {
         "id": user.id,
@@ -214,33 +214,33 @@ def get_user(user_id: int):
 
 @app.put("/user/{user_id}")
 def update_user(user_id: int, user_data: UserUpdate):
-    """修改用户信息"""
+    """Update user information"""
     db = SessionLocal()
     user = db.query(User).filter(User.id == user_id).first()
     
     if not user:
         db.close()
-        return {"error": "用户不存在"}
+        return {"error": "User does not exist"}
     
-    # 更新用户名
+    # Update username
     if user_data.username:
-        # 检查新用户名是否已存在
+        # Check if the new username already exists
         existing_username = db.query(User).filter(
             User.username == user_data.username,
             User.id != user_id
         ).first()
         if existing_username:
             db.close()
-            return {"error": "用户名已存在"}
+            return {"error": "Username already exists"}
         user.username = user_data.username
     
-    # 更新密码
+    # Update password
     if user_data.password:
         user.password = user_data.password
     
     db.commit()
     response_data = {
-        "message": "修改成功",
+        "message": "Update successful.",
         "user": {
             "id": user.id,
             "email": user.email,
@@ -416,12 +416,3 @@ def get_stats():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-# if __name__ == "__main__":
-#     # 临时调试：直接查询数据库
-#     db = SessionLocal()
-#     trips = db.query(Trip).all()
-#     print(f"总数据数：{len(trips)}")
-#     for trip in trips:
-#         print(f"ID: {trip.id}, Title: {trip.title}, Status: {trip.status}")
-#     db.close()

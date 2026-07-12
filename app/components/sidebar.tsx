@@ -7,15 +7,15 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const menuItems = [
-    { href: "/home", label: "首页", icon: "🏠" },
-    { href: "/trips", label: "我的计划", icon: "✈️" },
-    { href: "/destinations", label: "目的地", icon: "🌍" },
-    { href: "/favorites", label: "收藏", icon: "❤️" },
-    { href: "/settings", label: "设置", icon: "⚙️" },
+    { href: "/home", label: "Home", icon: "🏠" },
+    { href: "/trips", label: "My Trips", icon: "✈️" },
+    { href: "/destinations", label: "Destinations", icon: "🌍" },
+    { href: "/favorites", label: "Favorites", icon: "❤️" },
+    { href: "/settings", label: "Settings", icon: "⚙️" },
   ];
 
   return (
-    <div className="fixed left-0 top-0 w-280px h-screen bg-white border-r border-gray-200 p-6">
+    <div className="fixed left-0 top-0 w-[280px] h-screen bg-white border-r border-gray-200 p-6">
       {/* Logo & Brand */}
       <div className="flex items-center gap-3 mb-12">
         <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">

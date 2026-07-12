@@ -97,9 +97,9 @@ export default function MainHomePage() {
   };
 
   const handleBatchDelete = async () => {
-    if (selectedIds.length === 0) return alert('请选择要删除的计划');
+    if (selectedIds.length === 0) return alert('Please select a trip to delete.');
 
-    if (!confirm(`确定要删除 ${selectedIds.length} 个计划吗？`)) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} trips?`)) return;
 
     try {
       await Promise.all(selectedIds.map((id) => deleteTrip(id)));
@@ -107,15 +107,15 @@ export default function MainHomePage() {
       setIsSelectMode(false);
       setLoading(true);
       await fetchData();
-      alert('批量删除成功');
+      alert('Batch delete successful');
     } catch (error) {
       console.error('Error batch deleting trips:', error);
-      alert('删除失败，请重试');
+      alert('Delete failed, please try again');
     }
   };
 
   if (!user) {
-    return <div className="text-gray-600">加载中...</div>;
+    return <div className="text-gray-600">loading...</div>;
   }
 
   return (
@@ -123,32 +123,32 @@ export default function MainHomePage() {
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">首页</h1>
-            <p className="text-gray-600">快速开始规划，查看最近计划和整体进度。</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Home</h1>
+            <p className="text-gray-600">Quickly start planning, view recent trips and overall progress.</p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
             className="bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition"
           >
-            + 开始规划
+            + Start Planning
           </button>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-10 mb-8 flex gap-12">
           <div className="flex-1">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">开始你的下一次冒险</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Start Your Next Adventure</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              创建路线、安排日期、管理预算，并把心仪的地点加入行程。
+              Create itineraries, schedule dates, manage budgets, and add your favorite destinations to your trips.
             </p>
             <div className="flex gap-4">
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition"
               >
-                开始规划
+                Start Planning
               </button>
               <button className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition">
-                浏览目的地
+                Browse Destinations
               </button>
             </div>
           </div>
@@ -158,21 +158,21 @@ export default function MainHomePage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-gray-600">加载中...</div>
+          <div className="text-center py-12 text-gray-600">Loading...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <StatCard label="总计划数" value={stats.total_trips} color="blue" />
-            <StatCard label="目的地数" value={stats.total_destinations} color="green" />
-            <StatCard label="已完成" value={stats.completed_trips} color="purple" />
+            <StatCard label="Total Trips" value={stats.total_trips} color="blue" />
+            <StatCard label="Destinations" value={stats.total_destinations} color="green" />
+            <StatCard label="Completed" value={stats.completed_trips} color="purple" />
           </div>
         )}
 
         <div className="mb-8">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">最近的计划</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Trips</h2>
             <input
               type="text"
-              placeholder="搜索计划标题..."
+              placeholder="Search by trip title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -182,7 +182,7 @@ export default function MainHomePage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               {filteredTrips.length > 0 && (
-                <p className="text-sm text-gray-600">找到 {filteredTrips.length} 个计划</p>
+                <p className="text-sm text-gray-600">Found {filteredTrips.length} trips</p>
               )}
             </div>
 
@@ -192,14 +192,14 @@ export default function MainHomePage() {
                   onClick={handleSelectAll}
                   className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50"
                 >
-                  {selectedIds.length === filteredTrips.length ? '取消全选' : '全选'}
+                  {selectedIds.length === filteredTrips.length ? 'Deselect All' : 'Select All'}
                 </button>
                 <button
                   onClick={handleBatchDelete}
                   disabled={selectedIds.length === 0}
                   className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 disabled:opacity-50"
                 >
-                  删除 ({selectedIds.length})
+                  Delete ({selectedIds.length})
                 </button>
                 <button
                   onClick={() => {
@@ -208,7 +208,7 @@ export default function MainHomePage() {
                   }}
                   className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50"
                 >
-                  取消
+                  Cancel
                 </button>
               </div>
             ) : (
@@ -216,7 +216,7 @@ export default function MainHomePage() {
                 onClick={() => setIsSelectMode(true)}
                 className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50"
               >
-                批量操作
+                Batch Actions
               </button>
             )}
           </div>
@@ -250,8 +250,8 @@ export default function MainHomePage() {
           ) : (
             <div className="text-center py-12 text-gray-500">
               {searchQuery
-                ? `没有找到包含 "${searchQuery}" 的计划`
-                : '还没有计划，点击“开始规划”创建一个'}
+                ? `No trips found containing "${searchQuery}"`
+                : 'No trips yet, click "Start Planning" to create one'}
             </div>
           )}
         </div>

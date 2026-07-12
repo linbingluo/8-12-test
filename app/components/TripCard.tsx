@@ -37,14 +37,14 @@ export default function TripCard({
   const handleDelete = async () => {
     if (!id) return;
 
-    if (confirm(`确定要删除"${title}"吗？`)) {
+    if (confirm(`Are you sure you want to delete "${title}"?`)) {
       setDeleting(true);
       try {
         await deleteTrip(id);
         onDeleted?.();
       } catch (error) {
         console.error("Error deleting trip:", error);
-        alert("删除失败，请重试");
+        alert("Failed to delete, please try again.");
       } finally {
         setDeleting(false);
       }
@@ -62,9 +62,9 @@ export default function TripCard({
   };
 
   const statusLabels = {
-    draft: "草稿",
-    ongoing: "进行中",
-    completed: "已完成",
+    draft: "Draft",
+    ongoing: "Ongoing",
+    completed: "Completed",
   };
 
   return (
@@ -99,7 +99,7 @@ export default function TripCard({
             <button
               onClick={onEdit}
               className="text-gray-400 hover:text-blue-600 transition flex-shrink-0"
-              title="编辑"
+              title="Edit"
             >
               ✏️
             </button>
@@ -107,7 +107,7 @@ export default function TripCard({
               onClick={handleDelete}
               disabled={deleting}
               className="text-gray-400 hover:text-red-600 transition flex-shrink-0 disabled:opacity-50"
-              title="删除"
+              title="Delete"
             >
               ✕
             </button>
@@ -117,17 +117,17 @@ export default function TripCard({
 
       <div className="space-y-2 mb-4">
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">目的地：</span>
-          <span className="font-semibold text-gray-900">{destinations} 个</span>
+          <span className="text-gray-600">Destinations:</span>
+          <span className="font-semibold text-gray-900">{destinations} </span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">预算：</span>
+          <span className="text-gray-600">Budget:</span>
           <span className="font-semibold text-gray-900">
-            ¥{budget.toLocaleString()}
+            £{budget.toLocaleString()}
           </span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">评分：</span>
+          <span className="text-gray-600">Rating:</span>
           <span className="font-semibold text-yellow-500">
             {"★".repeat(rating)}
           </span>

@@ -19,13 +19,13 @@ export default function RegisterPage() {
 
     // 验证密码是否匹配
     if (password !== confirmPassword) {
-      setError('两次输入的密码不一致');
+      setError('Passwords do not match.');
       return;
     }
 
     // 验证密码长度
     if (password.length < 6) {
-      setError('密码长度至少6位');
+      setError('Password must be at least 6 characters long.');
       return;
     }
 
@@ -62,7 +62,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">注册</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Register</h1>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -74,14 +74,14 @@ export default function RegisterPage() {
           {/* 用户名输入框 */}
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              用户名
+              Username
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              placeholder="输入用户名"
+              placeholder="Enter your username"
               required
             />
           </div>
@@ -89,14 +89,14 @@ export default function RegisterPage() {
           {/* 邮箱输入框 */}
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              邮箱
+              Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              placeholder="输入邮箱"
+              placeholder="Enter your email"
               required
             />
           </div>
@@ -104,14 +104,14 @@ export default function RegisterPage() {
           {/* 密码输入框 */}
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              密码
+              Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              placeholder="输入密码"
+              placeholder="Enter your password"
               required
             />
           </div>
@@ -119,14 +119,14 @@ export default function RegisterPage() {
           {/* 确认密码输入框 */}
           <div className="mb-6">
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              确认密码
+              Confirm Password
             </label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              placeholder="再次输入密码"
+              placeholder="Enter your password again"
               required
             />
           </div>
@@ -137,16 +137,16 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
           >
-            {loading ? '注册中...' : '注册'}
+            {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
 
         {/* 登录链接 */}
         <div className="mt-4 text-center">
           <p className="text-gray-600 text-sm">
-            已有账户？{' '}
+            Already have an account?{' '}
             <Link href="/login" className="text-blue-500 hover:text-blue-600">
-              登录
+              Login
             </Link>
           </p>
         </div>

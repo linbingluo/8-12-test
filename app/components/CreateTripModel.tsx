@@ -50,12 +50,12 @@ export default function CreateTripModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-8 max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-6">创建新计划</h2>
+        <h2 className="text-2xl font-bold mb-6">Create New Trip</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              计划名称 *
+              Trip Name *
             </label>
             <input
               type="text"
@@ -65,13 +65,13 @@ export default function CreateTripModal({
                 setFormData({ ...formData, title: e.target.value })
               }
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="例如：巴黎之旅"
+              placeholder="e.g., Paris Trip"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              日期范围 *
+              Date Range *
             </label>
             <input
               type="text"
@@ -81,13 +81,13 @@ export default function CreateTripModal({
                 setFormData({ ...formData, date_range: e.target.value })
               }
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="例如：2024-06-01 ~ 2024-06-10"
+              placeholder="e.g., 2026-06-01 ~ 2026-06-10"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              目的地数量
+              Number of Destinations
             </label>
             <input
               type="number"
@@ -99,14 +99,14 @@ export default function CreateTripModal({
                 })
               }
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0"
+              placeholder="e.g., 0"
               min="0"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              预算（元）
+              Budget (GBP)
             </label>
             <input
               type="number"
@@ -126,14 +126,14 @@ export default function CreateTripModal({
               onClick={onClose}
               className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-50 transition"
             >
-              取消
+              Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
               className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition disabled:opacity-50"
             >
-              {loading ? "创建中..." : "创建"}
+              {loading ? "Creating..." : "Create"}
             </button>
           </div>
         </form>

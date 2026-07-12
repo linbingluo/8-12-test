@@ -59,7 +59,7 @@ export default function EditTripModal({
       onClose();
     } catch (error) {
       console.error("Error updating trip:", error);
-      alert("更新失败，请重试");
+      alert("Update failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -70,12 +70,12 @@ export default function EditTripModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-8 max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-6">编辑计划</h2>
+        <h2 className="text-2xl font-bold mb-6">Edit Trip</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              计划名称 *
+              Trip Name *
             </label>
             <input
               type="text"
@@ -85,13 +85,13 @@ export default function EditTripModal({
                 setFormData({ ...formData, title: e.target.value })
               }
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="例如：巴黎之旅"
+              placeholder="e.g., Paris Trip"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              日期范围 *
+              Date Range *
             </label>
             <input
               type="text"
@@ -101,13 +101,13 @@ export default function EditTripModal({
                 setFormData({ ...formData, date_range: e.target.value })
               }
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="例如：2024-06-01 ~ 2024-06-10"
+              placeholder="e.g., 2026-06-01 ~ 2026-06-10"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              目的地数量
+              Number of Destinations
             </label>
             <input
               type="number"
@@ -119,14 +119,14 @@ export default function EditTripModal({
                 })
               }
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0"
+              placeholder="e.g., 0"
               min="0"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              预算（元）
+              Budget (GBP)
             </label>
             <input
               type="number"
@@ -142,7 +142,7 @@ export default function EditTripModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              评分
+              Rating
             </label>
             <select
               value={formData.rating}
@@ -161,7 +161,7 @@ export default function EditTripModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              状态
+              Status
             </label>
             <select
               value={formData.status}
@@ -170,9 +170,9 @@ export default function EditTripModal({
               }
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="draft">草稿</option>
-              <option value="ongoing">进行中</option>
-              <option value="completed">已完成</option>
+              <option value="draft">Draft</option>
+              <option value="ongoing">Ongoing</option>
+              <option value="completed">Completed</option>
             </select>
           </div>
 
@@ -182,14 +182,14 @@ export default function EditTripModal({
               onClick={onClose}
               className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition"
             >
-              取消
+              Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
               className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
             >
-              {loading ? "保存中..." : "保存"}
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </form>

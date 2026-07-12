@@ -48,8 +48,8 @@ export default function ProfilePage() {
 
       const data = await response.json();
 
-      if (data.message === '修改成功') {
-        setSuccess('资料已更新！');
+      if (data.message === 'Update successful.') {
+        setSuccess('Profile updated!');
         // 更新本地存储
         localStorage.setItem('user', JSON.stringify({
           ...user,
@@ -59,10 +59,10 @@ export default function ProfilePage() {
         // 清空密码字段
         setPassword('');
       } else {
-        setError(data.error || '更新失败');
+        setError(data.error || 'Update failed');
       }
     } catch (err) {
-      setError('网络错误，请重试');
+      setError('Network error, please try again');
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
-          <p className="text-gray-600">加载中...</p>
+          <p className="text-gray-600">loading...</p>
         </div>
       </div>
     );
@@ -89,9 +89,9 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">个人资料</h1>
+          <h1 className="text-2xl font-bold">Profile</h1>
           <Link href="/home" className="text-blue-500 hover:text-blue-600">
-            返回首页
+            Back to Home
           </Link>
         </div>
 
@@ -111,14 +111,14 @@ export default function ProfilePage() {
           {/* 用户名输入框 */}
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              用户名
+              Username
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              placeholder="输入用户名"
+              placeholder="Enter username"
               required
             />
           </div>
@@ -126,14 +126,14 @@ export default function ProfilePage() {
           {/* 邮箱输入框 */}
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              邮箱
+              Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              placeholder="输入邮箱"
+              placeholder="Enter email"
               required
             />
           </div>
@@ -141,14 +141,14 @@ export default function ProfilePage() {
           {/* 密码输入框（可选，只有要修改密码时才填） */}
           <div className="mb-6">
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              新密码（可选，留空则不修改）
+              New Password (optional, leave blank to keep current)
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              placeholder="输入新密码"
+              placeholder="Enter new password"
             />
           </div>
 
@@ -158,7 +158,7 @@ export default function ProfilePage() {
             disabled={loading}
             className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 mb-4"
           >
-            {loading ? '保存中...' : '保存修改'}
+            {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </form>
 
@@ -167,7 +167,7 @@ export default function ProfilePage() {
           onClick={handleLogout}
           className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600"
         >
-          退出登录
+          Log Out
         </button>
       </div>
     </div>
