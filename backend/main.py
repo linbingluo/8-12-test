@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel, ConfigDict
@@ -61,6 +61,7 @@ class Trip(Base):
     __tablename__ = "trips"
     
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     title = Column(String, index=True)
     date_range = Column(String)
     destinations_count = Column(Integer, default=0)
@@ -109,6 +110,7 @@ class DestinationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class TripCreate(BaseModel):
+    user_id: int
     title: str
     date_range: str
     destinations_count: int
@@ -118,6 +120,7 @@ class TripCreate(BaseModel):
 
 class TripResponse(BaseModel):
     id: int
+    user_id: int
     title: str
     date_range: str
     destinations_count: int
@@ -258,9 +261,9 @@ def update_user(user_id: int, user_data: UserUpdate):
 # ===== Trip Routes =====
 
 @app.get("/trips/recent")  
-def get_recent_trips():
+def get_recent_trips(user_id: int):
     db = SessionLocal()
-    trips = db.query(Trip).all()
+    trips = db.query(Trip).filter(Trip.user_id == user_id).all()
     db.close()
     
     result = []
@@ -329,9 +332,9 @@ def delete_destination(destination_id: int):
 
 # ===== Trip Routes =====
 @app.get("/trips", response_model=List[TripResponse])
-def get_trips():
+def get_trips(user_id: int):
     db = SessionLocal()
-    trips = db.query(Trip).order_by(Trip.created_at.desc()).limit(2).all()
+    trips = db.query(Trip).filter(Trip.user_id == user_id).order_by(Trip.created_at.desc()).limit(2).all()
     db.close()
     return trips
 
@@ -397,11 +400,11 @@ def delete_trip(trip_id: int):
 
 # ===== Statistics Routes =====
 @app.get("/stats")
-def get_stats():
+def get_stats(user_id: int):
     db = SessionLocal()
-    total_trips = db.query(Trip).count()
+    total_trips = db.query(Trip).filter(Trip.user_id == user_id).count()
     total_destinations = db.query(Destination).count()
-    completed_trips = db.query(Trip).filter(Trip.status == "completed").count()
+    completed_trips = db.query(Trip).filter(Trip.user_id == user_id, Trip.status == "completed").count()
     db.close()
     
     return {

@@ -1,12 +1,12 @@
 const API_BASE_URL = "http://localhost:8000";
 
-export async function getStats() {
-  const response = await fetch(`${API_BASE_URL}/stats`);
+export async function getStats(userId: number) {
+  const response = await fetch(`${API_BASE_URL}/stats?user_id=${userId}`);
   return response.json();
 }
 
-export async function getRecentTrips() {
-  const response = await fetch(`${API_BASE_URL}/trips/recent`);
+export async function getRecentTrips(userId: number) {
+  const response = await fetch(`${API_BASE_URL}/trips/recent?user_id=${userId}`);
   return response.json();
 }
 

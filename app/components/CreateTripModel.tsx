@@ -26,8 +26,12 @@ export default function CreateTripModal({
     e.preventDefault();
     setLoading(true);
 
+    const userData = localStorage.getItem('user');
+    const user = userData ? JSON.parse(userData) : null;
+    if (!user) return;
+
     try {
-      await createTrip(formData);
+      await createTrip({ ...formData, user_id: user.id });
       setFormData({
         title: "",
         date_range: "",

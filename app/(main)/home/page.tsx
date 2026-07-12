@@ -55,16 +55,16 @@ export default function MainHomePage() {
 
     try {
       setUser(JSON.parse(userData));
-      fetchData();
+      fetchData(JSON.parse(userData).id);
     } catch {
       localStorage.removeItem('user');
       router.replace('/login');
     }
   }, [router]);
 
-  const fetchData = async () => {
+  const fetchData = async (userId: number) => {
     try {
-      const [statsData, tripsData] = await Promise.all([getStats(), getRecentTrips()]);
+      const [statsData, tripsData] = await Promise.all([getStats(userId), getRecentTrips(userId)]);
       setStats(statsData);
       setRecentTrips(tripsData || []);
     } catch (error) {
