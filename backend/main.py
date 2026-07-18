@@ -56,6 +56,10 @@ class Destination(Base):
     name = Column(String, index=True)
     description = Column(String)
     rating = Column(Integer, default=5)
+    country = Column(String, default="")   
+    tags = Column(String, default="")
+    status = Column(String, default="wishlist")
+    image_url = Column(String, default="")
 
 class Trip(Base):
     __tablename__ = "trips"
@@ -68,6 +72,19 @@ class Trip(Base):
     budget = Column(Integer, default=0)
     rating = Column(Integer, default=5)
     status = Column(String, default="draft")
+    created_at = Column(String, default=lambda: datetime.now().isoformat())
+
+# ========== TripDestination Model ==========
+class TripDestination(Base):
+    __tablename__ = "trip_destinations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    trip_id = Column(Integer, ForeignKey("trips.id"), nullable=False)
+    name = Column(String, nullable=False)
+    description = Column(String, default="")
+    day_number = Column(Integer, default=1)
+    budget = Column(Integer, default=0)
+    actual_cost = Column(Integer, default=0)
     created_at = Column(String, default=lambda: datetime.now().isoformat())
 
 Base.metadata.create_all(bind=engine)
@@ -100,12 +117,20 @@ class DestinationCreate(BaseModel):
     name: str
     description: str
     rating: int = 5
+    country: str = ""
+    tags: str = ""
+    status: str = "wishlist"
+    image_url: str = ""
 
 class DestinationResponse(BaseModel):
     id: int
     name: str
     description: str
     rating: int
+    country: str
+    tags: str
+    status: str
+    image_url: str
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -129,6 +154,33 @@ class TripResponse(BaseModel):
     status: str
     created_at: str
     
+    model_config = ConfigDict(from_attributes=True)
+
+# ===== TripDestination Pydantic Models =====
+class TripDestinationCreate(BaseModel):
+    name: str
+    description: str
+    day_number: int = 1
+    budget: int = 0
+    actual_cost: int = 0
+
+class TripDestinationUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    day_number: Optional[int] = None
+    budget: Optional[int] = None
+    actual_cost: Optional[int] = None
+
+class TripDestinationResponse(BaseModel):
+    id: int
+    trip_id: int
+    name: str
+    description: str
+    day_number: int
+    budget: int
+    actual_cost: int
+    created_at: str
+
     model_config = ConfigDict(from_attributes=True)
 
 # ========== API Routes ==========
@@ -314,6 +366,25 @@ def get_destination(destination_id: int):
         return {"error": "Destination not found"}
     return destination
 
+@app.put("/destinations/{destination_id}", response_model=DestinationResponse)
+def update_destination(destination_id: int, data: DestinationCreate):
+    db = SessionLocal()
+    destination = db.query(Destination).filter(Destination.id == destination_id).first()
+    if not destination:
+        db.close()
+        raise HTTPException(status_code=404, detail="Destination not found")
+    destination.name = data.name
+    destination.description = data.description
+    destination.rating = data.rating
+    destination.country = data.country
+    destination.tags = data.tags
+    destination.status = data.status
+    destination.image_url = data.image_url
+    db.commit()
+    db.refresh(destination)
+    db.close()
+    return destination
+
 @app.delete("/destinations/{destination_id}")
 def delete_destination(destination_id: int):
     db = SessionLocal()
@@ -403,7 +474,12 @@ def delete_trip(trip_id: int):
 def get_stats(user_id: int):
     db = SessionLocal()
     total_trips = db.query(Trip).filter(Trip.user_id == user_id).count()
-    total_destinations = db.query(Destination).count()
+    total_destinations = (
+        db.query(TripDestination)
+        .join(Trip, TripDestination.trip_id == Trip.id)
+        .filter(Trip.user_id == user_id)
+        .count()
+    )
     completed_trips = db.query(Trip).filter(Trip.user_id == user_id, Trip.status == "completed").count()
     db.close()
     
@@ -413,6 +489,119 @@ def get_stats(user_id: int):
         "completed_trips": completed_trips
     }
 
+# ===== Trip Destination Routes =====
+@app.get("/trips/{trip_id}/destinations")
+def get_trip_destinations(trip_id: int):
+    """Get all destinations for a trip"""
+    db = SessionLocal()
+    destinations = db.query(TripDestination).filter(
+        TripDestination.trip_id == trip_id
+    ).order_by(TripDestination.day_number).all()
+    db.close()
+    return [
+        {
+            "id": d.id,
+            "trip_id": d.trip_id,
+            "name": d.name,
+            "description": d.description,
+            "day_number": d.day_number,
+            "budget": d.budget,
+            "actual_cost": d.actual_cost,
+            "created_at": d.created_at,
+        }
+        for d in destinations
+    ]
+
+@app.post("/trips/{trip_id}/destinations")
+def add_trip_destination(trip_id: int, dest: TripDestinationCreate):
+    """Add a destination to a trip"""
+    db = SessionLocal()
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if not trip:
+        db.close()
+        raise HTTPException(status_code=404, detail="Trip not found")
+
+    db_dest = TripDestination(
+        trip_id=trip_id,
+        name=dest.name,
+        description=dest.description,
+        day_number=dest.day_number,
+        budget=dest.budget,
+        actual_cost=dest.actual_cost,
+    )
+    db.add(db_dest)
+
+    # Update destinations_count on the trip
+    trip.destinations_count = db.query(TripDestination).filter(
+        TripDestination.trip_id == trip_id
+    ).count() + 1
+
+    db.commit()
+    db.refresh(db_dest)
+    result = {
+        "id": db_dest.id,
+        "trip_id": db_dest.trip_id,
+        "name": db_dest.name,
+        "description": db_dest.description,
+        "day_number": db_dest.day_number,
+        "budget": db_dest.budget,
+        "actual_cost": db_dest.actual_cost,
+        "created_at": db_dest.created_at,
+    }
+    db.close()
+    return result
+
+@app.put("/trips/{trip_id}/destinations/{dest_id}")
+def update_trip_destination(trip_id: int, dest_id: int, dest_data: TripDestinationUpdate):
+    """Update a destination in a trip"""
+    db = SessionLocal()
+    dest = db.query(TripDestination).filter(
+        TripDestination.id == dest_id,
+        TripDestination.trip_id == trip_id
+    ).first()
+    if not dest:
+        db.close()
+        raise HTTPException(status_code=404, detail="Destination not found")
+
+    if dest_data.name is not None:
+        dest.name = dest_data.name
+    if dest_data.description is not None:
+        dest.description = dest_data.description
+    if dest_data.day_number is not None:
+        dest.day_number = dest_data.day_number
+    if dest_data.budget is not None:
+        dest.budget = dest_data.budget
+    if dest_data.actual_cost is not None:
+        dest.actual_cost = dest_data.actual_cost
+
+    db.commit()
+    db.close()
+    return {"message": "Destination updated successfully"}
+
+@app.delete("/trips/{trip_id}/destinations/{dest_id}")
+def delete_trip_destination(trip_id: int, dest_id: int):
+    """Delete a destination from a trip"""
+    db = SessionLocal()
+    dest = db.query(TripDestination).filter(
+        TripDestination.id == dest_id,
+        TripDestination.trip_id == trip_id
+    ).first()
+    if not dest:
+        db.close()
+        raise HTTPException(status_code=404, detail="Destination not found")
+
+    db.delete(dest)
+
+    # Update destinations_count
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if trip:
+        trip.destinations_count = db.query(TripDestination).filter(
+            TripDestination.trip_id == trip_id
+        ).count() - 1
+
+    db.commit()
+    db.close()
+    return {"message": "Destination deleted successfully"}
 
 
 # ========== Main Program Entry ==========

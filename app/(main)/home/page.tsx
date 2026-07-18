@@ -66,7 +66,7 @@ export default function MainHomePage() {
     try {
       const [statsData, tripsData] = await Promise.all([getStats(userId), getRecentTrips(userId)]);
       setStats(statsData);
-      setRecentTrips(tripsData || []);
+      setRecentTrips(Array.isArray(tripsData) ? tripsData : []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -106,7 +106,7 @@ export default function MainHomePage() {
       setSelectedIds([]);
       setIsSelectMode(false);
       setLoading(true);
-      await fetchData();
+      await fetchData(user!.id);
       alert('Batch delete successful');
     } catch (error) {
       console.error('Error batch deleting trips:', error);
@@ -235,7 +235,7 @@ export default function MainHomePage() {
                   status={trip.status}
                   onDeleted={async () => {
                     setLoading(true);
-                    await fetchData();
+                    await fetchData(user!.id);
                   }}
                   onEdit={() => {
                     setEditingTrip(trip);
@@ -261,7 +261,7 @@ export default function MainHomePage() {
           onClose={() => setIsModalOpen(false)}
           onTripCreated={async () => {
             setLoading(true);
-            await fetchData();
+            await fetchData(user!.id);
           }}
         />
 
@@ -272,7 +272,7 @@ export default function MainHomePage() {
           onTripUpdated={async () => {
             setIsEditModalOpen(false);
             setLoading(true);
-            await fetchData();
+            await fetchData(user!.id);
           }}
         />
       </main>

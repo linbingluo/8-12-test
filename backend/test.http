@@ -1,3 +1,8 @@
+### ========== Health Check ==========
+
+### 健康检查
+GET http://localhost:8000/
+
 ### 注册用户
 POST http://localhost:8000/auth/register
 Content-Type: application/json
@@ -20,11 +25,167 @@ Content-Type: application/json
 ### 获取用户信息
 GET http://localhost:8000/user/1
 
-### 修改用户信息
+### 修改用户信息（改密码）
 PUT http://localhost:8000/user/1
 Content-Type: application/json
 
 {
-  "username": "newusername",
-  "password": null
+  "username": null,
+  "password": "newpassword"
 }
+
+### 获取不存在用户（预期返回 error）
+GET http://localhost:8000/user/9999
+
+
+### ========== Destination（全局目的地库）==========
+
+### 创建目的地
+POST http://localhost:8000/destinations
+Content-Type: application/json
+
+{
+  "name": "Tokyo",
+  "description": "Japan capital, vibrant city",
+  "rating": 5
+}
+
+### 获取所有目的地
+GET http://localhost:8000/destinations
+
+### 获取单个目的地
+GET http://localhost:8000/destinations/1
+
+### 获取不存在目的地（预期返回 error）
+GET http://localhost:8000/destinations/9999
+
+### 删除目的地
+DELETE http://localhost:8000/destinations/1
+
+
+### ========== Trip ==========
+
+### 创建行程
+POST http://localhost:8000/trips
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "title": "Japan Trip 2025",
+  "date_range": "2025-03-01 ~ 2025-03-10",
+  "destinations_count": 0,
+  "budget": 5000,
+  "rating": 5,
+  "status": "draft"
+}
+
+### 获取用户行程列表（最新2条）
+GET http://localhost:8000/trips?user_id=1
+
+### 获取用户最近所有行程
+GET http://localhost:8000/trips/recent?user_id=1
+
+### 获取单个行程
+GET http://localhost:8000/trips/1
+
+### 更新行程
+PUT http://localhost:8000/trips/2
+Content-Type: application/json
+
+{
+  "title": "Japan Trip 2025 Updated",
+  "status": "completed",
+  "budget": 6000
+}
+
+### 获取不存在行程（预期返回 error）
+GET http://localhost:8000/trips/9999
+
+### 删除行程
+DELETE http://localhost:8000/trips/3
+
+
+### ========== TripDestination（行程内目的地）==========
+
+### 向行程添加第1个目的地（第1天）
+POST http://localhost:8000/trips/1/destinations
+Content-Type: application/json
+
+{
+  "name": "Shinjuku",
+  "description": "Famous shopping and entertainment district",
+  "day_number": 1,
+  "budget": 300,
+  "actual_cost": 0
+}
+
+### 向行程添加第2个目的地（第2天）
+POST http://localhost:8000/trips/1/destinations
+Content-Type: application/json
+
+{
+  "name": "Shibuya",
+  "description": "Iconic crossing and youth culture hub",
+  "day_number": 2,
+  "budget": 200,
+  "actual_cost": 0
+}
+
+### 向行程添加第3个目的地（最简请求，使用默认值）
+POST http://localhost:8000/trips/1/destinations
+Content-Type: application/json
+
+{
+  "name": "Asakusa"
+}
+
+### 向不存在行程添加目的地（预期 404）
+POST http://localhost:8000/trips/9999/destinations
+Content-Type: application/json
+
+{
+  "name": "Test Destination"
+}
+
+### 获取行程所有目的地（按天数排序）
+GET http://localhost:8000/trips/1/destinations
+
+### 更新行程目的地
+PUT http://localhost:8000/trips/1/destinations/1
+Content-Type: application/json
+
+{
+  "name": "Shinjuku (Updated)",
+  "description": "Also great for nightlife",
+  "day_number": 1,
+  "budget": 350,
+  "actual_cost": 320
+}
+
+### 只更新实际花费（部分更新）
+PUT http://localhost:8000/trips/1/destinations/2
+Content-Type: application/json
+
+{
+  "actual_cost": 180
+}
+
+### 更新不存在的目的地（预期 404）
+PUT http://localhost:8000/trips/1/destinations/9999
+Content-Type: application/json
+
+{
+  "name": "Ghost"
+}
+
+### 删除行程目的地
+DELETE http://localhost:8000/trips/1/destinations/3
+
+### 删除不存在的目的地（预期 404）
+DELETE http://localhost:8000/trips/1/destinations/9999
+
+
+### ========== Statistics ==========
+
+### 获取用户统计数据
+GET http://localhost:8000/stats?user_id=1

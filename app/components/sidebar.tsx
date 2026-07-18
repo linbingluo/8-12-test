@@ -8,7 +8,7 @@ export default function Sidebar() {
 
   const menuItems = [
     { href: "/home", label: "Home", icon: "🏠" },
-    { href: "/trips", label: "My Trips", icon: "✈️" },
+    { href: "/my-trips", label: "My Trips", icon: "✈️" },
     { href: "/destinations", label: "Destinations", icon: "🌍" },
     { href: "/favorites", label: "Favorites", icon: "❤️" },
     { href: "/settings", label: "Settings", icon: "⚙️" },
@@ -29,7 +29,7 @@ export default function Sidebar() {
         <p className="text-xs font-semibold text-gray-500 mb-4">MAIN MENU</p>
         <nav className="space-y-2">
           {menuItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}

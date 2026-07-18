@@ -46,14 +46,14 @@ export default function RegisterPage() {
 
       const data = await response.json();
 
-      if (data.message === '注册成功') {
+      if (data.message === 'Registration successful') {
         // 注册成功，跳转到登录页面
         router.push('/login');
       } else {
-        setError(data.error || '注册失败');
+        setError(data.error || 'Registration failed');
       }
     } catch (err) {
-      setError('网络错误，请重试');
+      setError('Network error, please try again');
     } finally {
       setLoading(false);
     }
