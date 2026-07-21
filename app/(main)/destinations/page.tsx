@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getDestinations, deleteDestination } from "@/app/lib/api";
+import { getDestinations, deleteDestination, createFavorite, getFavorites } from "@/app/lib/api";
 import DestinationCard from "@/app/components/DestinationCard";
 import CreateDestinationModal from "@/app/components/CreateDestinationModal";
 import EditDestinationModal from "@/app/components/EditDestinationModal";
@@ -21,7 +21,19 @@ type Destination = {
 
 export default function DestinationsPage() {
   const router = useRouter();
+  const [userId] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const userData = localStorage.getItem("user");
+      if (!userData) return null;
+      const parsed = JSON.parse(userData);
+      return parsed.id ?? null;
+    } catch {
+      return null;
+    }
+  });
   const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -31,26 +43,49 @@ export default function DestinationsPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingDest, setEditingDest] = useState<Destination | null>(null);
 
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (!userData) {
-      router.replace("/login");
-      return;
-    }
-    fetchDestinations();
-  }, [router]);
+  // useEffect(() => {
+  //   const userData = localStorage.getItem("user");
+  //   if (!userData) {
+  //     router.replace("/login");
+  //     return;
+  //   }
+  //   fetchDestinations();
+  // }, [router]);
 
-  const fetchDestinations = async () => {
+  // const fetchDestinations = async () => {
+  const fetchDestinations = useCallback(async (uid?: number) => {
+    const resolvedUserId = uid ?? userId;
     setLoading(true);
     try {
-      const data = await getDestinations();
+      // const data = await getDestinations();
+      const [data, favoritesData] = await Promise.all([
+        getDestinations(),
+        resolvedUserId ? getFavorites(resolvedUserId) : Promise.resolve([]),
+      ]);
       setDestinations(Array.isArray(data) ? data : []);
+      setFavoriteIds(
+        Array.isArray(favoritesData)
+          ? favoritesData.map((item) => item.destination_id)
+          : []
+      );
+      
     } catch {
       console.error("Failed to fetch destinations");
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      router.replace("/login");
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetchDestinations(userId);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchDestinations, router, userId]);
 
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
@@ -59,6 +94,21 @@ export default function DestinationsPage() {
       await fetchDestinations();
     } catch {
       alert("Failed to delete, please try again.");
+    }
+  };
+
+  const handleFavorite = async (destinationId: number, destinationName: string) => {
+    if (!userId) {
+      alert("Please login first.");
+      router.replace("/login");
+      return;
+    }
+    try {
+      await createFavorite(userId, destinationId);
+      setFavoriteIds((prev) => [...prev, destinationId]);
+      alert(`Added "${destinationName}" to favorites.`);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to add favorite");
     }
   };
 
@@ -153,6 +203,8 @@ export default function DestinationsPage() {
                       setIsEditOpen(true);
                     }}
                     onDeleted={() => handleDelete(dest.id, dest.name)}
+                    onFavorite={() => handleFavorite(dest.id, dest.name)}
+                    favoriteDisabled={favoriteIds.includes(dest.id)}
                   />
                 ))}
               </div>

@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
@@ -61,6 +62,17 @@ class Destination(Base):
     status = Column(String, default="wishlist")
     image_url = Column(String, default="")
 
+class Favorite(Base):
+    __tablename__ = "favorites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    city = Column(String, default="")
+    category = Column(String, default="")
+    rating = Column(Integer, default=5)
+    country = Column(String, default="")
+    saved_at = Column(String, default=lambda: datetime.now().strftime("%Y-%m-%d"))
+
 class Trip(Base):
     __tablename__ = "trips"
     
@@ -85,6 +97,15 @@ class TripDestination(Base):
     day_number = Column(Integer, default=1)
     budget = Column(Integer, default=0)
     actual_cost = Column(Integer, default=0)
+    created_at = Column(String, default=lambda: datetime.now().isoformat())
+
+class Favorite(Base):
+    __tablename__ = "favorites"
+    __table_args__ = (UniqueConstraint("user_id", "destination_id", name="uq_user_destination_favorite"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    destination_id = Column(Integer, ForeignKey("destinations.id"), nullable=False)
     created_at = Column(String, default=lambda: datetime.now().isoformat())
 
 Base.metadata.create_all(bind=engine)
@@ -180,6 +201,26 @@ class TripDestinationResponse(BaseModel):
     budget: int
     actual_cost: int
     created_at: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+# =====Favorite Pydantic Models =====
+class FavoriteCreate(BaseModel):
+    name: str
+    city: str = ""
+    category: str = ""
+    rating: int = 5
+    country: str = ""
+    saved_at: str = ""
+
+class FavoriteResponse(BaseModel):
+    id: int
+    name: str
+    city: str
+    category: str
+    rating: int
+    country: str
+    saved_at: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -603,6 +644,114 @@ def delete_trip_destination(trip_id: int, dest_id: int):
     db.close()
     return {"message": "Destination deleted successfully"}
 
+@app.post("/favorites")
+def create_favorite(favorite: FavoriteCreate) -> dict:
+    """Add a destination to a user's favorites."""
+    db = SessionLocal()
+
+    user = db.query(User).filter(User.id == favorite.user_id).first()
+    if not user:
+        db.close()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    destination = db.query(Destination).filter(Destination.id == favorite.destination_id).first()
+    if not destination:
+        db.close()
+        raise HTTPException(status_code=404, detail="Destination not found")
+
+    db_favorite = Favorite(
+        user_id=favorite.user_id,
+        destination_id=favorite.destination_id,
+    )
+    db.add(db_favorite)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        db.close()
+        raise HTTPException(status_code=409, detail="Destination is already in favorites")
+    db.refresh(db_favorite)
+
+    result = {
+        "message": "Favorite added successfully",
+        "favorite": {
+            "id": db_favorite.id,
+            "user_id": db_favorite.user_id,
+            "destination_id": db_favorite.destination_id,
+            "created_at": db_favorite.created_at,
+        }
+    }
+    db.close()
+    return result
+
+@app.get("/favorites")
+def get_favorites(user_id: int) -> List[dict]:
+    """Get all favorites for a user, including destination details."""
+    db = SessionLocal()
+    favorites = db.query(Favorite, Destination).join(
+        Destination, Favorite.destination_id == Destination.id
+    ).filter(
+        Favorite.user_id == user_id
+    ).all()
+
+    result = []
+    for favorite, destination in favorites:
+        result.append({
+            "id": favorite.id,
+            "user_id": favorite.user_id,
+            "destination_id": favorite.destination_id,
+            "created_at": favorite.created_at,
+            "destination": {
+                "id": destination.id,
+                "name": destination.name,
+                "description": destination.description,
+                "rating": destination.rating,
+                "country": destination.country,
+                "tags": destination.tags,
+                "status": destination.status,
+                "image_url": destination.image_url,
+            }
+        })
+
+    db.close()
+    return result
+
+@app.delete("/favorites/{favorite_id}")
+def delete_favorite(favorite_id: int, user_id: int) -> dict:
+    """Delete a favorite item for the specified user."""
+    db = SessionLocal()
+    favorite = db.query(Favorite).filter(
+        Favorite.id == favorite_id,
+        Favorite.user_id == user_id
+    ).first()
+
+    if not favorite:
+        db.close()
+        raise HTTPException(status_code=404, detail="Favorite not found")
+
+    db.delete(favorite)
+    db.commit()
+    db.close()
+    return {"message": "Favorite deleted successfully"}
+
+class FavoriteCreate(BaseModel):
+    name: str
+    city: str = ""
+    category: str = ""
+    rating: int = 5
+    country: str = ""
+    saved_at: str = ""
+
+class FavoriteResponse(BaseModel):
+    id: int
+    name: str
+    city: str
+    category: str
+    rating: int
+    country: str
+    saved_at: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 # ========== Main Program Entry ==========
 if __name__ == "__main__":

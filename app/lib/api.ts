@@ -139,3 +139,56 @@ export async function deleteDestination(id: number) {
   if (!response.ok) throw new Error("Failed to delete destination");
   return response.json();
 }
+
+// ===== Favorites =====
+export type FavoriteItem = {
+  id: number;
+  user_id: number;
+  destination_id: number;
+  created_at: string;
+  destination: {
+    id: number;
+    name: string;
+    description: string;
+    rating: number;
+    country: string;
+    tags: string;
+    status: string;
+    image_url: string;
+  };
+};
+
+export async function createFavorite(userId: number, destinationId: number) {
+  const response = await fetch(`${API_BASE_URL}/favorites`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      destination_id: destinationId,
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.detail || "Failed to add favorite");
+  }
+  return data;
+}
+
+export async function getFavorites(userId: number): Promise<FavoriteItem[]> {
+  const response = await fetch(`${API_BASE_URL}/favorites?user_id=${userId}`);
+  if (!response.ok) throw new Error("Failed to fetch favorites");
+  return response.json();
+}
+
+export async function deleteFavorite(favoriteId: number, userId: number) {
+  const response = await fetch(`${API_BASE_URL}/favorites/${favoriteId}?user_id=${userId}`, {
+    method: "DELETE",
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.detail || "Failed to delete favorite");
+  }
+  return data;
+}
+
