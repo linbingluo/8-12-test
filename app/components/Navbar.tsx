@@ -10,10 +10,21 @@ export default function Navbar() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
+    // const userData = localStorage.getItem("user");
+    // if (userData) {
+    //   setUser(JSON.parse(userData));
+    // }
+
+    const loadUser = () => {
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+    };
+    loadUser();
+    window.addEventListener("userUpdated", loadUser);
+    return () => window.removeEventListener("userUpdated", loadUser);
+
   }, []);
 
   const handleLogout = () => {

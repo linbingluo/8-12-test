@@ -62,17 +62,7 @@ class Destination(Base):
     status = Column(String, default="wishlist")
     image_url = Column(String, default="")
 
-class Favorite(Base):
-    __tablename__ = "favorites"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    city = Column(String, default="")
-    category = Column(String, default="")
-    rating = Column(Integer, default=5)
-    country = Column(String, default="")
-    saved_at = Column(String, default=lambda: datetime.now().strftime("%Y-%m-%d"))
-
+# ========== Trip Model ==========
 class Trip(Base):
     __tablename__ = "trips"
     
@@ -110,6 +100,30 @@ class Favorite(Base):
 
 Base.metadata.create_all(bind=engine)
 
+# ========== Database Migration ==========
+def _migrate_favorites_table():
+    """Migrate favorites table from old schema (name/city/category) to new schema (user_id/destination_id)."""
+    import sqlite3
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(favorites)")
+    columns = {row[1] for row in cursor.fetchall()}
+    if columns and "user_id" not in columns:
+        cursor.execute("DROP TABLE IF EXISTS favorites")
+        cursor.execute("""
+            CREATE TABLE favorites (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                destination_id INTEGER NOT NULL REFERENCES destinations(id),
+                created_at VARCHAR,
+                CONSTRAINT uq_user_destination_favorite UNIQUE (user_id, destination_id)
+            )
+        """)
+        conn.commit()
+    conn.close()
+_migrate_favorites_table()
+
 # ========== Pydantic Models ==========
 # ===== User Pydantic Models =====
 class UserRegister(BaseModel):
@@ -131,6 +145,7 @@ class UserResponse(BaseModel):
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
+    email: Optional[str] = None
     password: Optional[str] = None
 
 # ===== Destination Pydantic Models =====
@@ -206,21 +221,15 @@ class TripDestinationResponse(BaseModel):
 
 # =====Favorite Pydantic Models =====
 class FavoriteCreate(BaseModel):
-    name: str
-    city: str = ""
-    category: str = ""
-    rating: int = 5
-    country: str = ""
-    saved_at: str = ""
+    user_id: int
+    destination_id: int
 
 class FavoriteResponse(BaseModel):
     id: int
-    name: str
-    city: str
-    category: str
-    rating: int
-    country: str
-    saved_at: str
+    user_id: int
+    destination_id: int
+    created_at: str
+    
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -734,24 +743,7 @@ def delete_favorite(favorite_id: int, user_id: int) -> dict:
     db.close()
     return {"message": "Favorite deleted successfully"}
 
-class FavoriteCreate(BaseModel):
-    name: str
-    city: str = ""
-    category: str = ""
-    rating: int = 5
-    country: str = ""
-    saved_at: str = ""
 
-class FavoriteResponse(BaseModel):
-    id: int
-    name: str
-    city: str
-    category: str
-    rating: int
-    country: str
-    saved_at: str
-
-    model_config = ConfigDict(from_attributes=True)
 
 # ========== Main Program Entry ==========
 if __name__ == "__main__":

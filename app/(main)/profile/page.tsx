@@ -51,11 +51,16 @@ export default function ProfilePage() {
       if (data.message === 'Update successful.') {
         setSuccess('Profile updated!');
         // 更新本地存储
-        localStorage.setItem('user', JSON.stringify({
-          ...user,
-          username,
-          email,
-        }));
+        // localStorage.setItem('user', JSON.stringify({
+        //   ...user,
+        //   username,
+        //   email,
+        // }));
+
+        const updatedUser = { ...user, username, email };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        window.dispatchEvent(new Event('userUpdated'));
+
         // 清空密码字段
         setPassword('');
       } else {

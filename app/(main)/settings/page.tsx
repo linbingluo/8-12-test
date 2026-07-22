@@ -142,7 +142,11 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (data.message === 'Update successful.') {
-        const updated = { ...user, username: editUsername, email: editEmail };
+        const updated = {
+           ...user, 
+           username: data.user?.username ?? editUsername,
+           email: data.user?.email ?? editEmail,
+          };
         setUser(updated);
         localStorage.setItem('user', JSON.stringify(updated));
         setProfileMsg('Profile updated!');

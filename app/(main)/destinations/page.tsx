@@ -57,22 +57,27 @@ export default function DestinationsPage() {
     const resolvedUserId = uid ?? userId;
     setLoading(true);
     try {
-      // const data = await getDestinations();
-      const [data, favoritesData] = await Promise.all([
-        getDestinations(),
-        resolvedUserId ? getFavorites(resolvedUserId) : Promise.resolve([]),
-      ]);
+      const data = await getDestinations();
+      
       setDestinations(Array.isArray(data) ? data : []);
-      setFavoriteIds(
-        Array.isArray(favoritesData)
-          ? favoritesData.map((item) => item.destination_id)
-          : []
-      );
+      
       
     } catch {
       console.error("Failed to fetch destinations");
     } finally {
       setLoading(false);
+    }
+    if (resolvedUserId) {
+      try {
+        const favoritesData = await getFavorites(resolvedUserId);
+        setFavoriteIds(
+          Array.isArray(favoritesData)
+            ? favoritesData.map((item) => item.destination_id)
+            : []
+        );
+      } catch {
+        console.error("Failed to fetch favorites");
+      }
     }
   }, [userId]);
 
