@@ -1,12 +1,22 @@
 // API Base URL
 const API_BASE_URL = "http://localhost:8000";
 
-// Define Destination type
+
 export interface Destination {
   id: number;
   name: string;
   description: string;
   rating: number;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+export async function getDestinations(): Promise<Destination[]> {
+  const response = await fetch(`${API_BASE_URL}/destinations`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch destinations: ${response.status}`);
+  }
+  return response.json();
 }
 
 export interface CreateDestinationRequest {

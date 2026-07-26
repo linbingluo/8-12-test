@@ -138,7 +138,7 @@ export default function SettingsPage() {
       const res = await fetch(`http://localhost:8000/user/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: editUsername }),
+        body: JSON.stringify({ username: editUsername, email: editEmail }),
       });
       const data = await res.json();
       if (data.message === 'Update successful.') {
@@ -149,6 +149,7 @@ export default function SettingsPage() {
           };
         setUser(updated);
         localStorage.setItem('user', JSON.stringify(updated));
+        window.dispatchEvent(new Event('userUpdated'));
         setProfileMsg('Profile updated!');
         setProfileMsgOk(true);
       } else {

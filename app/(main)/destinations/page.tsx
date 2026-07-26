@@ -2,11 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { getDestinations, deleteDestination, createFavorite, getFavorites } from "@/app/lib/api";
 import DestinationCard from "@/app/components/DestinationCard";
 import CreateDestinationModal from "@/app/components/CreateDestinationModal";
 import EditDestinationModal from "@/app/components/EditDestinationModal";
-import MapView from "@/app/components/MapView";
+
+// Leaflet depends on browser APIs (window/document) and cannot be server-rendered.
+// `ssr: false` ensures it is only loaded on the client.
+const MapView = dynamic(() => import("@/app/components/MapView"), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-xl border border-gray-200 p-4 h-[580px] flex items-center justify-center text-gray-400 text-sm">
+      Loading map...
+    </div>
+  ),
+});
 
 type Destination = {
   id: number;
@@ -218,7 +229,13 @@ export default function DestinationsPage() {
 
           {/* Right: map */}
           <div className="w-80 flex-shrink-0">
-            <MapView count={filtered.length} />
+            <MapView
+              destinations={filtered.map((d) => ({
+                id: d.id,
+                name: d.name,
+                country: d.country,
+              }))}
+            />
           </div>
         </div>
       </main>

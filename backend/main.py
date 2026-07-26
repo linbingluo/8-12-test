@@ -342,6 +342,18 @@ def update_user(user_id: int, user_data: UserUpdate):
     # Update password
     if user_data.password:
         user.password = user_data.password
+
+    # Update email
+    if user_data.email:
+        # Check if the new email already exists
+        existing_email = db.query(User).filter(
+            User.email == user_data.email,
+            User.id != user_id
+        ).first()
+        if existing_email:
+            db.close()
+            return {"error": "Email is already registered"}
+        user.email = user_data.email
     
     db.commit()
     response_data = {
