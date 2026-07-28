@@ -1,5 +1,6 @@
 import Sidebar from "../components/sidebar";
 import Navbar from "../components/Navbar";
+import "leaflet/dist/leaflet.css";
 
 export default function MainLayout({
   children,
