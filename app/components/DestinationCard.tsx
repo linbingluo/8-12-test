@@ -16,6 +16,7 @@ interface DestinationCardProps {
 }
 
 export default function DestinationCard({
+  image_url,
   name,
   description,
   rating,
@@ -30,16 +31,31 @@ export default function DestinationCard({
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col">
-      {/* Image placeholder */}
-      <div className="relative w-full h-44 bg-gray-100 border-b border-gray-200">
-        <svg
-          className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="none"
-          viewBox="0 0 100 100"
+      {/* Image */}
+      <div className="relative w-full h-44 bg-gray-100 border-b border-gray-200 overflow-hidden">
+        {image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={image_url}
+            alt={name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+              (e.currentTarget.nextElementSibling as HTMLElement | null)?.style.setProperty("display", "flex");
+            }}
+          />
+        ) : null}
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ display: image_url ? "none" : "flex" }}
         >
-          <line x1="0" y1="0" x2="100" y2="100" stroke="#d1d5db" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-          <line x1="100" y1="0" x2="0" y2="100" stroke="#d1d5db" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-        </svg>
+          <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+            <line x1="0" y1="0" x2="100" y2="100" stroke="#d1d5db" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+            <line x1="100" y1="0" x2="0" y2="100" stroke="#d1d5db" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          </svg>
+
+        </div>
+
       </div>
 
       {/* Content */}

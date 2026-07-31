@@ -108,7 +108,19 @@ export default function FavoritesPage() {
                     key={favorite.id}
                     className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col"
                   >
-                    <div className="relative w-full h-40 bg-gray-100 border-b border-gray-200" />
+                    <div className="relative w-full h-40 bg-gray-100 border-b border-gray-200 overflow-hidden">
+                      {destination.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={destination.image_url}
+                          alt={destination.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      ) : null}
+                    </div>
                     <div className="p-4 flex flex-col flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-lg font-semibold text-gray-900">{destination.name}</h3>

@@ -14,6 +14,7 @@ type Trip = {
   budget: number;
   rating: number;
   status: string;
+  image_url?: string;
 };
 
 const STATUS_OPTIONS = ['All', 'draft', 'active', 'completed'];
@@ -131,6 +132,75 @@ export default function MyTripsPage() {
     );
   };
 
+  
+  
+  
+  const handleImageUpload = async (tripId: number, file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target?.result as string;
+      if (!dataUrl) return;
+
+      // Resize large images via canvas before saving
+      const img = new Image();
+      img.onload = async () => {
+
+
+
+        const MAX_DIM = 1200;
+        let w = img.width;
+        let h = img.height;
+        if (w > MAX_DIM || h > MAX_DIM) {
+          if (w >= h) { h = Math.round((h * MAX_DIM) / w); w = MAX_DIM; }
+          else { w = Math.round((w * MAX_DIM) / h); h = MAX_DIM; }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        
+        let imageUrl = dataUrl;
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h);
+          imageUrl = canvas.toDataURL("image/jpeg", 0.8);
+        }
+
+
+
+      // Update local state immediately so the image shows right away
+        setTrips((prev) =>
+          prev.map((t) => (t.id === tripId ? { ...t, image_url: imageUrl } : t))
+        );
+        try {
+          await updateTrip(tripId, { image_url: imageUrl });
+          if (userId) loadTrips(userId);
+        } catch {
+          alert("Failed to save image. Please try again.");
+        }
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageDelete = async (tripId: number) => {
+    setTrips((prev) =>
+      prev.map((t) => (t.id === tripId ? { ...t, image_url: undefined } : t))
+    );
+    try {
+      await updateTrip(tripId, { image_url: null });
+      if (userId) loadTrips(userId);
+    } catch {
+      alert("Failed to delete image. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto">
@@ -140,12 +210,25 @@ export default function MyTripsPage() {
             <h1 className="text-3xl font-bold text-gray-900">My Travel Plans</h1>
             <p className="text-gray-500 mt-1">Manage draft, active, and completed travel plans.</p>
           </div>
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="bg-gray-900 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-800 transition"
-          >
-            + New Trip
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setIsBulkMode((v) => {
+                  if (v) setSelectedIds([]);
+                  return !v;
+                });
+              }}
+              className="border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-50 transition"
+            >
+              {isBulkMode ? 'Cancel' : 'Bulk Edit'}
+            </button>
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="bg-gray-900 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-800 transition"
+            >
+              + New Trip
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -182,7 +265,7 @@ export default function MyTripsPage() {
             </select>
 
             {/* Bulk Edit controls */}
-            {isBulkMode ? (
+            {isBulkMode && (
               <div className="flex gap-2 ml-auto">
                 <button
                   onClick={() =>
@@ -203,23 +286,9 @@ export default function MyTripsPage() {
                 >
                   Delete ({selectedIds.length})
                 </button>
-                <button
-                  onClick={() => {
-                    setIsBulkMode(false);
-                    setSelectedIds([]);
-                  }}
-                  className="border border-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
+                
               </div>
-            ) : (
-              <button
-                onClick={() => setIsBulkMode(true)}
-                className="ml-auto border border-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm hover:bg-gray-50"
-              >
-                Bulk Edit
-              </button>
+            
             )}
           </div>
         </div>
@@ -246,20 +315,67 @@ export default function MyTripsPage() {
               >
                 {/* Card image placeholder */}
                 <div
-                  className="h-40 bg-gray-100 rounded-t-xl flex items-center justify-center border-b border-dashed border-gray-300 cursor-pointer"
+                  className="relative h-40 bg-gray-100 rounded-t-xl flex items-center justify-center border-b border-dashed border-gray-300 cursor-pointer overflow-hidden"
                   onClick={() => isBulkMode && toggleSelect(trip.id)}
                 >
                   {isBulkMode && (
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(trip.id)}
+                      onClick={(e) => e.stopPropagation()}
                       onChange={() => toggleSelect(trip.id)}
                       className="w-5 h-5"
                     />
                   )}
-                  {!isBulkMode && (
-                    <span className="text-gray-300 text-sm">Image placeholder</span>
+                  {!isBulkMode && trip.image_url && (
+                    <img
+                      src={trip.image_url}
+                      alt={`${trip.title} cover`}
+                      className="w-full h-full object-cover"
+                    />
                   )}
+                  {/* {!isBulkMode && !trip.image_url && (
+
+
+                    // <span className="text-gray-300 text-sm">Image placeholder</span>
+                  )} */}
+                  {!isBulkMode && (
+                    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                      
+                      {/* Image-level actions */}
+                      <div className="flex gap-1">
+                        <label
+                          htmlFor={`trip-image-${trip.id}`}
+                          className="bg-white/90 text-gray-700 border border-gray-300 w-8 h-8 flex items-center justify-center rounded-md hover:bg-white cursor-pointer"
+                          title={trip.image_url ? "Change image" : "Add image"}
+                        >
+                          ✏️
+                        </label>
+                        <input
+                          id={`trip-image-${trip.id}`}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            void handleImageUpload(trip.id, e.target.files?.[0]);
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                        {trip.image_url && (
+                          <button
+                            onClick={() => void handleImageDelete(trip.id)}
+                            className="bg-white/90 text-red-500 border border-gray-300 w-8 h-8 flex items-center justify-center rounded-md hover:bg-white cursor-pointer"
+                            title="Remove image"
+                          >
+                            ❌
+                          </button>
+                        )}
+                      </div>
+
+
+                    </div>
+                  )}
+
                 </div>
 
                 {/* Card body */}
@@ -285,6 +401,8 @@ export default function MyTripsPage() {
                     >
                       Details
                     </button>
+
+                    
                     <button
                       onClick={() => {
                         setEditingTrip(trip);

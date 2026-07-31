@@ -74,6 +74,7 @@ class Trip(Base):
     budget = Column(Integer, default=0)
     rating = Column(Integer, default=5)
     status = Column(String, default="draft")
+    image_url = Column(String, default="")
     created_at = Column(String, default=lambda: datetime.now().isoformat())
 
 # ========== TripDestination Model ==========
@@ -123,6 +124,21 @@ def _migrate_favorites_table():
         conn.commit()
     conn.close()
 _migrate_favorites_table()
+
+def _migrate_trips_table():
+    """Ensure trips table contains image_url column for trip cover images."""
+    import sqlite3
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(trips)")
+    columns = {row[1] for row in cursor.fetchall()}
+    if columns and "image_url" not in columns:
+        cursor.execute("ALTER TABLE trips ADD COLUMN image_url VARCHAR DEFAULT ''")
+        conn.commit()
+    conn.close()
+_migrate_trips_table()
+
 
 # ========== Pydantic Models ==========
 # ===== User Pydantic Models =====
@@ -178,6 +194,7 @@ class TripCreate(BaseModel):
     budget: int
     rating: int = 5
     status: str = "draft"
+    image_url: str = ""
 
 class TripResponse(BaseModel):
     id: int
@@ -188,6 +205,7 @@ class TripResponse(BaseModel):
     budget: int
     rating: int
     status: str
+    image_url: str
     created_at: str
     
     model_config = ConfigDict(from_attributes=True)
@@ -389,7 +407,8 @@ def get_recent_trips(user_id: int):
             "destinations_count": trip.destinations_count,
             "budget": trip.budget,
             "rating": trip.rating,
-            "status": trip.status
+            "status": trip.status,
+            "image_url": trip.image_url
         })
     return result
 
@@ -502,6 +521,8 @@ def update_trip(trip_id: int, trip_data: dict):
         trip.rating = trip_data["rating"]
     if "status" in trip_data:
         trip.status = trip_data["status"]
+    if "image_url" in trip_data:
+        trip.image_url = trip_data["image_url"]
     
     db.commit()
     db.close()
