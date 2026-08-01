@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getRecentTrips, deleteTrip, createTrip, updateTrip } from '../../lib/api';
 import CreateTripModal from '../../components/CreateTripModel';
 import EditTripModal from '../../components/EditTripModal';
+import { CloseIcon, EditIcon } from '../../components/ActionIcons';
 
 type Trip = {
   id: number;
@@ -334,47 +335,43 @@ export default function MyTripsPage() {
                       className="w-full h-full object-cover"
                     />
                   )}
+                  {!isBulkMode && (
+                    <div className="absolute top-3 right-3 flex items-center gap-2 rounded-full bg-white/85 px-2 py-1 shadow-sm">
+                      <label
+                        htmlFor={`trip-image-${trip.id}`}
+                        className="text-gray-500 hover:text-blue-600 transition cursor-pointer"
+                        title={trip.image_url ? "Change image" : "Add image"}
+                      >
+                        ✏️
+                      </label>
+                      <input
+                        id={`trip-image-${trip.id}`}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          void handleImageUpload(trip.id, e.target.files?.[0]);
+                          e.currentTarget.value = "";
+                        }}
+                      />
+                      {trip.image_url && (
+                        <button
+                          onClick={() => void handleImageDelete(trip.id)}
+                          className="text-gray-500 hover:text-red-600 transition"
+                          title="Remove image"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {/* {!isBulkMode && !trip.image_url && (
 
 
                     // <span className="text-gray-300 text-sm">Image placeholder</span>
                   )} */}
-                  {!isBulkMode && (
-                    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-                      
-                      {/* Image-level actions */}
-                      <div className="flex gap-1">
-                        <label
-                          htmlFor={`trip-image-${trip.id}`}
-                          className="bg-white/90 text-gray-700 border border-gray-300 w-8 h-8 flex items-center justify-center rounded-md hover:bg-white cursor-pointer"
-                          title={trip.image_url ? "Change image" : "Add image"}
-                        >
-                          ✏️
-                        </label>
-                        <input
-                          id={`trip-image-${trip.id}`}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            void handleImageUpload(trip.id, e.target.files?.[0]);
-                            e.currentTarget.value = "";
-                          }}
-                        />
-                        {trip.image_url && (
-                          <button
-                            onClick={() => void handleImageDelete(trip.id)}
-                            className="bg-white/90 text-red-500 border border-gray-300 w-8 h-8 flex items-center justify-center rounded-md hover:bg-white cursor-pointer"
-                            title="Remove image"
-                          >
-                            ❌
-                          </button>
-                        )}
-                      </div>
-
-
-                    </div>
-                  )}
+                  
 
                 </div>
 
@@ -384,7 +381,11 @@ export default function MyTripsPage() {
                     <h3 className="font-semibold text-gray-900 text-lg leading-tight">
                       {trip.title}
                     </h3>
-                    <StatusBadge status={trip.status} />
+
+                    <div className="flex flex-col items-end gap-2">
+                      
+                      <StatusBadge status={trip.status} />
+                    </div>
                   </div>
                   <p className="text-sm text-gray-500 mb-1">{trip.date_range}</p>
                   <p className="text-sm text-gray-600 mb-1">
@@ -437,7 +438,7 @@ export default function MyTripsPage() {
         <EditTripModal
           isOpen={isEditOpen}
           onClose={() => setIsEditOpen(false)}
-          trip={editingTrip}
+          trip={editingTrip ?? undefined}
           onTripUpdated={async () => {
             setIsEditOpen(false);
             if (userId) loadTrips(userId);

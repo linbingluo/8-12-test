@@ -1,17 +1,68 @@
 const API_BASE_URL = "http://localhost:8000";
 
-export async function getStats(userId: number) {
+export type UserDetail = {
+  id: number;
+  email: string;
+  username: string;
+  home_image_url: string;
+  created_at: string;
+};
+
+export type StatsSummary = {
+  total_trips: number;
+  total_destinations: number;
+  completed_trips: number;
+  favorites?: number;
+};
+
+export type RecentTrip = {
+  id: number;
+  title: string;
+  date_range: string;
+  destinations_count: number;
+  budget: number;
+  rating: number;
+  status: string;
+};
+
+export async function getUser(userId: number): Promise<UserDetail> {
+  const response = await fetch(`${API_BASE_URL}/user/${userId}`);
+  const data = await response.json();
+  if (!response.ok || data?.error) throw new Error(data?.error || "Failed to fetch user");
+  return data;
+}
+
+export async function updateUser(
+  userId: number,
+  user: {
+    username?: string;
+    email?: string;
+    password?: string;
+    home_image_url?: string;
+  }
+) {
+  const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(user),
+  });
+  const data = await response.json();
+  if (!response.ok || data?.error) throw new Error(data?.error || "Failed to update user");
+  return data;
+}
+
+export async function getStats(userId: number): Promise<StatsSummary> {
   const response = await fetch(`${API_BASE_URL}/stats?user_id=${userId}`);
   return response.json();
 }
 
-export async function getRecentTrips(userId: number) {
+export async function getRecentTrips(userId: number): Promise<RecentTrip[]> {
   const response = await fetch(`${API_BASE_URL}/trips/recent?user_id=${userId}`);
   return response.json();
 }
 
-// 创建计划
-export async function createTrip(trip: any) {
+// Create a new trip
+export async function createTrip(trip: Record<string, unknown>) {
   const response = await fetch(`${API_BASE_URL}/trips`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -21,7 +72,7 @@ export async function createTrip(trip: any) {
   return response.json();
 }
 
-// 删除计划
+// Delete a trip
 export async function deleteTrip(tripId: number) {
   const response = await fetch(`${API_BASE_URL}/trips/${tripId}`, {
     method: "DELETE",
@@ -30,8 +81,8 @@ export async function deleteTrip(tripId: number) {
   return response.json();
 }
 
-// 更新计划
-export async function updateTrip(tripId: number, trip: any) {
+// Update a trip
+export async function updateTrip(tripId: number, trip: Record<string, unknown>) {
   const response = await fetch(`${API_BASE_URL}/trips/${tripId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -41,13 +92,13 @@ export async function updateTrip(tripId: number, trip: any) {
   return response.json();
 }
 
-// 获取行程目的地列表
+// Get trip destinations
 export async function getTripDestinations(tripId: number) {
   const response = await fetch(`${API_BASE_URL}/trips/${tripId}/destinations`);
   return response.json();
 }
 
-// 添加目的地到行程
+// Add a destination to a trip
 export async function addTripDestination(tripId: number, dest: {
   name: string;
   description?: string;
@@ -64,7 +115,7 @@ export async function addTripDestination(tripId: number, dest: {
   return response.json();
 }
 
-// 更新目的地
+// Update a destination
 export async function updateTripDestination(tripId: number, destId: number, dest: {
   name?: string;
   description?: string;
@@ -81,7 +132,7 @@ export async function updateTripDestination(tripId: number, destId: number, dest
   return response.json();
 }
 
-// 删除目的地
+// Delete a destination
 export async function deleteTripDestination(tripId: number, destId: number) {
   const response = await fetch(`${API_BASE_URL}/trips/${tripId}/destinations/${destId}`, {
     method: "DELETE",

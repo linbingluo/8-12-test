@@ -14,7 +14,7 @@ interface EditTripModalProps {
     destinations_count: number;
     budget: number;
     rating: number;
-    status: "draft" | "ongoing" | "completed";
+    status: string;
   };
 }
 

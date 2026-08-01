@@ -1,18 +1,22 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import CreateTripModal from '../../components/CreateTripModel';
+import { CloseIcon, EditIcon } from '../../components/ActionIcons';
 import StatCard from '../../components/StatCard';
 import TripCard from '../../components/TripCard';
 import EditTripModal from '@/app/components/EditTripModal';
-import { getStats, getRecentTrips, deleteTrip } from '../../lib/api';
+import { getStats, getRecentTrips, deleteTrip, getUser, updateUser } from '../../lib/api';
 
 type User = {
   id: number;
   username: string;
   email: string;
 };
+
+type TripStatus = 'draft' | 'ongoing' | 'completed';
 
 type Trip = {
   id: number;
@@ -21,13 +25,31 @@ type Trip = {
   destinations_count: number;
   budget: number;
   rating: number;
-  status: string;
+  status: TripStatus;
 };
+
+function normalizeTripStatus(status: string): TripStatus {
+  if (status === 'completed') return 'completed';
+  if (status === 'ongoing' || status === 'active') return 'ongoing';
+  return 'draft';
+}
+
+function getStoredUser(): User | null {
+  if (typeof window === 'undefined') return null;
+  const userData = localStorage.getItem('user');
+  if (!userData) return null;
+  try {
+    return JSON.parse(userData) as User;
+  } catch {
+    localStorage.removeItem('user');
+    return null;
+  }
+}
 
 export default function MainHomePage() {
   const router = useRouter();
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user] = useState<User | null>(getStoredUser);
   const [loading, setLoading] = useState(true);
 
   const [stats, setStats] = useState({
@@ -46,33 +68,46 @@ export default function MainHomePage() {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (!userData) {
-      router.replace('/login');
-      return;
-    }
-
-    try {
-      setUser(JSON.parse(userData));
-      fetchData(JSON.parse(userData).id);
-    } catch {
-      localStorage.removeItem('user');
-      router.replace('/login');
-    }
-  }, [router]);
+  const [homeImageUrl, setHomeImageUrl] = useState('');
+  const [isImageSaving, setIsImageSaving] = useState(false);
 
   const fetchData = async (userId: number) => {
     try {
-      const [statsData, tripsData] = await Promise.all([getStats(userId), getRecentTrips(userId)]);
-      setStats(statsData);
-      setRecentTrips(Array.isArray(tripsData) ? tripsData : []);
+      const [statsResult, tripsResult, userResult] = await Promise.all([
+        getStats(userId),
+        getRecentTrips(userId),
+        getUser(userId),
+      ]);
+
+      setStats(statsResult);
+      setRecentTrips(
+        Array.isArray(tripsResult)
+          ? tripsResult.map((trip) => ({
+              ...trip,
+              status: normalizeTripStatus(trip.status),
+            }))
+          : []
+      );
+      setHomeImageUrl(userResult.home_image_url || '');
+      
+
     } catch (error) {
       console.error('Error fetching data:', error);
+      setRecentTrips([]);
+      setHomeImageUrl('');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchData(user.id);
+  }, [router, user]);
 
   const filteredTrips = useMemo(
     () =>
@@ -113,6 +148,70 @@ export default function MainHomePage() {
       alert('Delete failed, please try again');
     }
   };
+  const saveHomeImage = async (imageUrl: string) => {
+    if (!user) return;
+    const previousImage = homeImageUrl;
+    setHomeImageUrl(imageUrl);
+    setIsImageSaving(true);
+    try {
+      await updateUser(user.id, { home_image_url: imageUrl });
+    } catch (error) {
+      console.error('Error saving home image:', error);
+      setHomeImageUrl(previousImage);
+      alert('Failed to save image, please try again.');
+    } finally {
+      setIsImageSaving(false);
+    }
+  };
+
+  const handleHomeImageUpload = async (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (!dataUrl) return;
+
+      const img = new window.Image();
+      img.onload = () => {
+        const MAX_DIM = 1200;
+        let w = img.width;
+        let h = img.height;
+        if (w > MAX_DIM || h > MAX_DIM) {
+          if (w >= h) {
+            h = Math.round((h * MAX_DIM) / w);
+            w = MAX_DIM;
+          } else {
+            w = Math.round((w * MAX_DIM) / h);
+            h = MAX_DIM;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+
+        let imageUrl = dataUrl;
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h);
+          imageUrl = canvas.toDataURL('image/jpeg', 0.8);
+        }
+
+        void saveHomeImage(imageUrl);
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleHomeImageDelete = async () => {
+    await saveHomeImage('');
+  };
 
   if (!user) {
     return <div className="text-gray-600">loading...</div>;
@@ -152,8 +251,56 @@ export default function MainHomePage() {
               </button>
             </div>
           </div>
-          <div className="w-80 h-64 bg-gray-100 rounded-lg border border-dashed border-gray-300 flex items-center justify-center">
-            <span className="text-gray-400">Image / Map preview</span>
+          <div className="relative w-80 h-64 overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-100">
+            {homeImageUrl ? (
+              <img
+                src={homeImageUrl}
+                alt="Your home preview"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 text-sm px-6 text-center gap-4">
+                <p>No home image yet. Upload one to personalize this section.</p>
+                <label
+                  htmlFor="home-image-upload"
+                  className="inline-flex items-center rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 cursor-pointer"
+                >
+                  Upload Image
+                </label>
+              </div>
+            )}
+            <div className="absolute top-3 right-3 z-10 flex items-center gap-2 rounded-full bg-white/85 px-2 py-1 shadow-sm">
+
+              <label
+                htmlFor="home-image-upload"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition hover:bg-blue-50 hover:text-blue-600 cursor-pointer"
+                title={homeImageUrl ? 'Replace image' : 'Upload image'}
+                aria-label={homeImageUrl ? 'Replace image' : 'Upload image'}
+              >
+                <EditIcon />
+              </label>
+              <input
+                id="home-image-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  void handleHomeImageUpload(e.target.files?.[0]);
+                  e.currentTarget.value = '';
+                }}
+              />
+              {homeImageUrl && (
+                <button
+                  onClick={() => void handleHomeImageDelete()}
+                  className="text-gray-500 hover:text-red-600 transition"
+                  title="Remove image"
+                  aria-label="Remove image"
+                  disabled={isImageSaving}
+                >
+                  <CloseIcon />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -268,7 +415,7 @@ export default function MainHomePage() {
         <EditTripModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          trip={editingTrip}
+          trip={editingTrip ?? undefined}
           onTripUpdated={async () => {
             setIsEditModalOpen(false);
             setLoading(true);

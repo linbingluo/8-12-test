@@ -46,6 +46,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
+    home_image_url = Column(String, default="")
     created_at = Column(String, default=lambda: datetime.now().isoformat())
 
 # ========== Destination Model ==========
@@ -139,6 +140,20 @@ def _migrate_trips_table():
     conn.close()
 _migrate_trips_table()
 
+def _migrate_users_table():
+    """Ensure users table contains home_image_url column for home cover images."""
+    import sqlite3
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(users)")
+    columns = {row[1] for row in cursor.fetchall()}
+    if columns and "home_image_url" not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN home_image_url VARCHAR DEFAULT ''")
+        conn.commit()
+    conn.close()
+_migrate_users_table()
+
 
 # ========== Pydantic Models ==========
 # ===== User Pydantic Models =====
@@ -155,6 +170,7 @@ class UserResponse(BaseModel):
     id: int
     email: str
     username: str
+    home_image_url: str = ""
     created_at: str
     
     model_config = ConfigDict(from_attributes=True)
@@ -163,6 +179,7 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
     password: Optional[str] = None
+    home_image_url: Optional[str] = None
 
 # ===== Destination Pydantic Models =====
 class DestinationCreate(BaseModel):
@@ -332,6 +349,7 @@ def get_user(user_id: int):
         "id": user.id,
         "email": user.email,
         "username": user.username,
+        "home_image_url": user.home_image_url or "",
         "created_at": user.created_at
     }
 
@@ -372,6 +390,10 @@ def update_user(user_id: int, user_data: UserUpdate):
             db.close()
             return {"error": "Email is already registered"}
         user.email = user_data.email
+
+    # Update home image
+    if user_data.home_image_url is not None:
+        user.home_image_url = user_data.home_image_url
     
     db.commit()
     response_data = {
@@ -379,7 +401,8 @@ def update_user(user_id: int, user_data: UserUpdate):
         "user": {
             "id": user.id,
             "email": user.email,
-            "username": user.username
+            "username": user.username,
+            "home_image_url": user.home_image_url or ""
         }
     }
     
