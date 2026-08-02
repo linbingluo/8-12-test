@@ -6,6 +6,7 @@ import { getRecentTrips, deleteTrip, createTrip, updateTrip } from '../../lib/ap
 import CreateTripModal from '../../components/CreateTripModel';
 import EditTripModal from '../../components/EditTripModal';
 import { CloseIcon, EditIcon } from '../../components/ActionIcons';
+import { normalizeImageUrl } from '@/app/lib/image';
 
 type Trip = {
   id: number;
@@ -84,7 +85,14 @@ export default function MyTripsPage() {
     setLoading(true);
     try {
       const data = await getRecentTrips(uid);
-      setTrips(Array.isArray(data) ? data : []);
+      setTrips(
+        Array.isArray(data)
+          ? data.map((trip) => ({
+              ...trip,
+              image_url: normalizeImageUrl(trip.image_url || ''),
+            }))
+          : []
+      );
     } catch {
       setTrips([]);
     } finally {

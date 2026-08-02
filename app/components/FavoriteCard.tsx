@@ -1,4 +1,5 @@
 "use client";
+import { normalizeImageUrl } from "@/app/lib/image";
 
 interface FavoriteCardProps {
   id: number;
@@ -24,14 +25,15 @@ export default function FavoriteCard({
   onEdit,
   onDeleted,
 }: FavoriteCardProps) {
+  const resolvedImageUrl = normalizeImageUrl(image_url || "");
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col">
       {/* Image */}
       <div className="relative w-full h-32 bg-gray-100 border-b border-gray-200 overflow-hidden">
-        {image_url ? (
+        {resolvedImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={image_url}
+            src={resolvedImageUrl}
             alt={name}
             className="w-full h-full object-cover"
             onError={(e) => {

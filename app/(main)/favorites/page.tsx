@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteFavorite, getFavorites, FavoriteItem } from "@/app/lib/api";
+import { normalizeImageUrl } from "@/app/lib/image";
 
 export default function FavoritesPage() {
   const router = useRouter();
@@ -102,6 +103,7 @@ export default function FavoritesPage() {
                 const tagList = destination.tags
                   ? destination.tags.split(",").map((t) => t.trim()).filter(Boolean)
                   : [];
+                const resolvedImageUrl = normalizeImageUrl(destination.image_url);
 
                 return (
                   <div
@@ -109,17 +111,27 @@ export default function FavoritesPage() {
                     className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col"
                   >
                     <div className="relative w-full h-40 bg-gray-100 border-b border-gray-200 overflow-hidden">
-                      {destination.image_url ? (
+                      {resolvedImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={destination.image_url}
+                          src={resolvedImageUrl}
                           alt={destination.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             (e.currentTarget as HTMLImageElement).style.display = "none";
+                            (e.currentTarget.nextElementSibling as HTMLElement | null)?.style.setProperty("display", "flex");
                           }}
                         />
                       ) : null}
+                      <div
+                        className="absolute inset-0 flex items-center justify-center"
+                        style={{ display: resolvedImageUrl ? "none" : "flex" }}
+                      >
+                        <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                          <line x1="0" y1="0" x2="100" y2="100" stroke="#d1d5db" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                          <line x1="100" y1="0" x2="0" y2="100" stroke="#d1d5db" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                        </svg>
+                      </div>
                     </div>
                     <div className="p-4 flex flex-col flex-1">
                       <div className="flex items-center justify-between mb-2">

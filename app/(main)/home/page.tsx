@@ -1,14 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import CreateTripModal from '../../components/CreateTripModel';
-import { CloseIcon, EditIcon } from '../../components/ActionIcons';
 import StatCard from '../../components/StatCard';
 import TripCard from '../../components/TripCard';
 import EditTripModal from '@/app/components/EditTripModal';
 import { getStats, getRecentTrips, deleteTrip, getUser, updateUser } from '../../lib/api';
+import { normalizeImageUrl } from '@/app/lib/image';
 
 type User = {
   id: number;
@@ -85,10 +84,12 @@ export default function MainHomePage() {
           ? tripsResult.map((trip) => ({
               ...trip,
               status: normalizeTripStatus(trip.status),
+              image_url: normalizeImageUrl(trip.image_url || ''),
             }))
           : []
       );
       setHomeImageUrl(userResult.home_image_url || '');
+      setHomeImageUrl(normalizeImageUrl(userResult.home_image_url || ''));
       
 
     } catch (error) {
@@ -251,7 +252,7 @@ export default function MainHomePage() {
               </button>
             </div>
           </div>
-          <div className="relative w-80 h-64 overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-100">
+          {/* <div className="relative w-80 h-64 overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-100">
             {homeImageUrl ? (
               <img
                 src={homeImageUrl}
@@ -269,15 +270,27 @@ export default function MainHomePage() {
                 </label>
               </div>
             )}
-            <div className="absolute top-3 right-3 z-10 flex items-center gap-2 rounded-full bg-white/85 px-2 py-1 shadow-sm">
-
+            <div className="absolute top-3 right-3 z-10 flex items-center gap-2 rounded-full bg-white/85 px-2 py-1 shadow-sm"> */}
+          <div className="w-80">
+            <div className="relative h-64 overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-100">
+              {homeImageUrl ? (
+                <img
+                  src={homeImageUrl}
+                  alt="Your home preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 text-sm px-6 text-center gap-4">
+                  <p>No home image yet. Upload one to personalize this section.</p>
+                </div>
+              )}
+            </div>
+            <div className="mt-3 flex gap-2">
               <label
                 htmlFor="home-image-upload"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition hover:bg-blue-50 hover:text-blue-600 cursor-pointer"
-                title={homeImageUrl ? 'Replace image' : 'Upload image'}
-                aria-label={homeImageUrl ? 'Replace image' : 'Upload image'}
+                className="flex-1 inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-blue-50 hover:text-blue-600 cursor-pointer"
               >
-                <EditIcon />
+                {homeImageUrl ? 'Change image' : 'Upload image'}
               </label>
               <input
                 id="home-image-upload"
@@ -289,17 +302,15 @@ export default function MainHomePage() {
                   e.currentTarget.value = '';
                 }}
               />
-              {homeImageUrl && (
-                <button
-                  onClick={() => void handleHomeImageDelete()}
-                  className="text-gray-500 hover:text-red-600 transition"
-                  title="Remove image"
-                  aria-label="Remove image"
-                  disabled={isImageSaving}
-                >
-                  <CloseIcon />
-                </button>
-              )}
+              <button
+                onClick={() => void handleHomeImageDelete()}
+                className="flex-1 rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!homeImageUrl || isImageSaving}
+                title="Remove image"
+                aria-label="Remove image"
+              >
+                Delete image
+              </button>
             </div>
           </div>
         </div>

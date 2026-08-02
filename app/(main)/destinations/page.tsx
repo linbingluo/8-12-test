@@ -247,6 +247,7 @@ export default function DestinationsPage() {
       />
 
       <EditDestinationModal
+        key={`${editingDest?.id ?? "none"}-${isEditOpen ? "open" : "closed"}`}
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
         destination={editingDest}

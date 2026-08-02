@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createDestination } from "@/app/lib/api";
+import { normalizeImageUrl, readImageFile } from "@/app/lib/image";
 
 interface CreateDestinationModalProps {
   isOpen: boolean;
@@ -24,15 +25,32 @@ export default function CreateDestinationModal({
     image_url: "",
   });
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await readImageFile(file);
+      setForm((prev) => ({ ...prev, image_url: url }));
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Image upload failed, please try again.");
+    } finally {
+      setUploading(false);
+      e.currentTarget.value = "";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return alert("Please enter a destination name.");
     setLoading(true);
     try {
-      await createDestination(form);
+      await createDestination({ ...form, image_url: normalizeImageUrl(form.image_url) });
       setForm({ name: "", description: "", rating: 5, country: "", tags: "", status: "wishlist", image_url: "" });
       onCreated();
       onClose();
@@ -53,14 +71,51 @@ export default function CreateDestinationModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g. Paris"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={form.image_url}
+                onChange={(e) => setForm({ ...form, image_url: normalizeImageUrl(e.target.value) })}
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                placeholder="https://example.com/image.jpg"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="border border-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50 whitespace-nowrap"
+              >
+                {uploading ? "Uploading…" : "Upload"}
+              </button>
+              {form.image_url && (
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, image_url: "" }))}
+                  className="border border-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 transition whitespace-nowrap"
+                >
+                  Clear
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+            {form.image_url && (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={form.image_url}
+                  alt="Preview"
+                  className="mt-2 h-24 w-full rounded-md border border-gray-200 object-cover"
+                />
+                <p className="mt-1 text-xs text-green-600 truncate">✓ {form.image_url}</p>
+              </>
+            )}
           </div>
 
           <div>
@@ -121,17 +176,7 @@ export default function CreateDestinationModal({
               </select>
             </div>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-            <input
-              type="url"
-              value={form.image_url}
-              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
+          
 
           <div className="flex gap-3 pt-2">
             <button
@@ -143,7 +188,7 @@ export default function CreateDestinationModal({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || uploading}
               className="flex-1 bg-gray-900 text-white py-2 rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
             >
               {loading ? "Creating..." : "Create"}

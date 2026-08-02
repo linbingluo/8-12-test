@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeImageUrl } from "@/app/lib/image";
+
 interface DestinationCardProps {
   id: number;
   name: string;
@@ -28,15 +30,16 @@ export default function DestinationCard({
   favoriteDisabled = false,
 }: DestinationCardProps) {
   const tagList = tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
+  const resolvedImageUrl = normalizeImageUrl(image_url);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col">
       {/* Image */}
       <div className="relative w-full h-44 bg-gray-100 border-b border-gray-200 overflow-hidden">
-        {image_url ? (
+        {resolvedImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={image_url}
+            src={resolvedImageUrl}
             alt={name}
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -47,7 +50,7 @@ export default function DestinationCard({
         ) : null}
         <div
           className="absolute inset-0 flex items-center justify-center"
-          style={{ display: image_url ? "none" : "flex" }}
+          style={{ display: resolvedImageUrl ? "none" : "flex" }}
         >
           <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
             <line x1="0" y1="0" x2="100" y2="100" stroke="#d1d5db" strokeWidth="1" vectorEffect="non-scaling-stroke" />
