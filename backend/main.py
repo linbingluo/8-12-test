@@ -126,6 +126,21 @@ def _migrate_favorites_table():
     conn.close()
 _migrate_favorites_table()
 
+
+def _migrate_destinations_table():
+    """Ensure destinations table contains image_url column for destination images."""
+    import sqlite3
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(destinations)")
+    columns = {row[1] for row in cursor.fetchall()}
+    if columns and "image_url" not in columns:
+        cursor.execute("ALTER TABLE destinations ADD COLUMN image_url VARCHAR DEFAULT ''")
+        conn.commit()
+    conn.close()
+_migrate_destinations_table()
+
 def _migrate_trips_table():
     """Ensure trips table contains image_url column for trip cover images."""
     import sqlite3

@@ -59,6 +59,7 @@ export default function EditDestinationModal({
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    const input = e.currentTarget;
     if (!file) return;
     setUploading(true);
     try {
@@ -68,7 +69,7 @@ export default function EditDestinationModal({
       alert(error instanceof Error ? error.message : "Image upload failed, please try again.");
     } finally {
       setUploading(false);
-      e.currentTarget.value = "";
+      input.value = "";
     }
   };
 
@@ -88,8 +89,8 @@ export default function EditDestinationModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-xl">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center overflow-y-auto p-4 z-50 sm:items-center">
+      <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-xl my-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">Edit Destination</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
@@ -166,7 +167,7 @@ export default function EditDestinationModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
             <div className="flex gap-2">
               <input
-                type="url"
+                type="text"
                 value={form.image_url}
                 onChange={(e) => setForm({ ...form, image_url: normalizeImageUrl(e.target.value) })}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"

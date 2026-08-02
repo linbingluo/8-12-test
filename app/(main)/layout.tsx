@@ -11,7 +11,7 @@ export default function MainLayout({
     <>
       <Sidebar />
       <Navbar />
-      <div className="ml-[280px] mt-16 p-8">{children}</div>
+      <div className="ml-[280px] mt-16 h-[calc(100vh-4rem)] overflow-y-auto p-8">{children}</div>
     </>
   );
 }

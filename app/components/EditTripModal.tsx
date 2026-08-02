@@ -68,8 +68,8 @@ export default function EditTripModal({
   if (!isOpen || !trip) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center overflow-y-auto p-4 z-50 sm:items-center">
+      <div className="bg-white rounded-lg p-8 max-w-md w-full my-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold mb-6">Edit Trip</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
