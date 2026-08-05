@@ -11,7 +11,7 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   
-  /* 添加自定义尺寸 */
+  /* Add custom dimensions */
   --width-280px: 280px;
   --spacing-280px: 280px;
 }
