@@ -71,12 +71,12 @@ export default function TripCard({
     <div
       className={`bg-white rounded-lg border p-6 hover:shadow-lg transition ${
         isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200"
-        // ✅ 选中时：蓝色边框 + 浅蓝色背景
+        
       }`}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-3 flex-1">
-          {/* ✅ 多选模式时显示复选框 */}
+          {/* ✅ display checkboxes in multiple selection mode */}
           {isSelectMode && (
             <input
               type="checkbox"
@@ -93,7 +93,7 @@ export default function TripCard({
           </div>
         </div>
 
-        {/* ✅ 非多选模式时显示编辑/删除按钮 */}
+        {/* ✅ The Edit/Delete button is displayed in non-multiple-selection mode */}
         {!isSelectMode && (
           <div className="flex gap-2 ml-2">
             <button

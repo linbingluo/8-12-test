@@ -1,9 +1,9 @@
 ### ========== Health Check ==========
 
-### 健康检查
+### Health check
 GET http://localhost:8000/
 
-### 注册用户
+### Registered user
 POST http://localhost:8000/auth/register
 Content-Type: application/json
 
@@ -13,7 +13,7 @@ Content-Type: application/json
   "password": "123456"
 }
 
-### 登录
+### Login
 POST http://localhost:8000/auth/login
 Content-Type: application/json
 
@@ -22,10 +22,10 @@ Content-Type: application/json
   "password": "123456"
 }
 
-### 获取用户信息
+### Obtain user information
 GET http://localhost:8000/user/1
 
-### 修改用户信息（改密码）
+### Modify user information (change password)
 PUT http://localhost:8000/user/1
 Content-Type: application/json
 
@@ -34,10 +34,10 @@ Content-Type: application/json
   "password": "newpassword"
 }
 
-### 获取不存在用户（预期返回 error）
+### Obtain a non-existent user (expected to return an error)
 GET http://localhost:8000/user/9999
 
-### 更新用户名
+### Update the user name
 PUT http://localhost:8000/user/1
 Content-Type: application/json
 
@@ -47,7 +47,7 @@ Content-Type: application/json
 
 ###
 
-### 同时更新用户名和邮箱
+### Update the username and email address simultaneously
 PUT http://localhost:8000/user/1
 Content-Type: application/json
 
@@ -58,7 +58,7 @@ Content-Type: application/json
 
 ###
 
-### 更新密码
+### Update password
 PUT http://localhost:8000/user/1
 Content-Type: application/json
 
@@ -68,7 +68,7 @@ Content-Type: application/json
 
 ###
 
-### 更新成已存在的邮箱（预期返回 error）
+### Update to an existing email address (expected to return an error
 PUT http://localhost:8000/user/1
 Content-Type: application/json
 
@@ -77,9 +77,9 @@ Content-Type: application/json
 }
 
 
-### ========== Destination（全局目的地库）==========
+### ========== Destination(Global Purpose Basement)==========
 
-### 创建目的地
+### Create a destination
 POST http://localhost:8000/destinations
 Content-Type: application/json
 
@@ -89,13 +89,13 @@ Content-Type: application/json
   "rating": 5
 }
 
-### 获取所有目的地
+### Get all destinations
 GET http://localhost:8000/destinations
 
-### 获取单个目的地
+### Get a single destination
 GET http://localhost:8000/destinations/1
 
-### 获取不存在目的地（预期返回 error）
+### Get a destination that does not exist (expected to return an error)
 GET http://localhost:8000/destinations/9999
 
 ### 删除目的地
@@ -105,7 +105,7 @@ DELETE http://localhost:8000/destinations/4
 
 ### ========== Trip ==========
 
-### 创建行程
+### Create a itinerary
 POST http://localhost:8000/trips
 Content-Type: application/json
 
@@ -119,16 +119,16 @@ Content-Type: application/json
   "status": "draft"
 }
 
-### 获取用户行程列表（最新2条）
+### Get the user itinerary list (the latest 2 items)
 GET http://localhost:8000/trips?user_id=1
 
-### 获取用户最近所有行程
+### Get all the user's recent trips
 GET http://localhost:8000/trips/recent?user_id=1
 
-### 获取单个行程
+### Get a single trip
 GET http://localhost:8000/trips/1
 
-### 更新行程
+### Update itinerary
 PUT http://localhost:8000/trips/2
 Content-Type: application/json
 
@@ -138,16 +138,16 @@ Content-Type: application/json
   "budget": 6000
 }
 
-### 获取不存在行程（预期返回 error）
+### Get a non-existent process (expected to return an error)
 GET http://localhost:8000/trips/9999
 
-### 删除行程
+### Delete the itinerary
 DELETE http://localhost:8000/trips/3
 
 
-### ========== TripDestination（行程内目的地）==========
+### ========== TripDestination（Destinations within the itinerary）==========
 
-### 向行程添加第1个目的地（第1天）
+### Add the first destination to the itinerary (Day 1)
 POST http://localhost:8000/trips/1/destinations
 Content-Type: application/json
 
@@ -159,7 +159,7 @@ Content-Type: application/json
   "actual_cost": 0
 }
 
-### 向行程添加第2个目的地（第2天）
+### Add a second destination to the itinerary (Day 2)）
 POST http://localhost:8000/trips/1/destinations
 Content-Type: application/json
 
@@ -171,7 +171,7 @@ Content-Type: application/json
   "actual_cost": 0
 }
 
-### 向行程添加第3个目的地（最简请求，使用默认值）
+### Add a third destination to the itinerary (minimum request, using default values)
 POST http://localhost:8000/trips/1/destinations
 Content-Type: application/json
 
@@ -179,7 +179,7 @@ Content-Type: application/json
   "name": "Asakusa"
 }
 
-### 向不存在行程添加目的地（预期 404）
+### Add a destination to a non-existent itinerary (expected 404)
 POST http://localhost:8000/trips/9999/destinations
 Content-Type: application/json
 
@@ -187,10 +187,10 @@ Content-Type: application/json
   "name": "Test Destination"
 }
 
-### 获取行程所有目的地（按天数排序）
+### Get all destinations of the itinerary (sorted by days)
 GET http://localhost:8000/trips/1/destinations
 
-### 更新行程目的地
+### Update the destination of the itinerary
 PUT http://localhost:8000/trips/1/destinations/1
 Content-Type: application/json
 
@@ -202,7 +202,7 @@ Content-Type: application/json
   "actual_cost": 320
 }
 
-### 只更新实际花费（部分更新）
+### Only update the actual cost (partially updated)
 PUT http://localhost:8000/trips/1/destinations/2
 Content-Type: application/json
 
@@ -210,7 +210,7 @@ Content-Type: application/json
   "actual_cost": 180
 }
 
-### 更新不存在的目的地（预期 404）
+### Update non-existent destinations (expected 404)
 PUT http://localhost:8000/trips/1/destinations/9999
 Content-Type: application/json
 
@@ -218,14 +218,14 @@ Content-Type: application/json
   "name": "Ghost"
 }
 
-### 删除行程目的地
+### Delete the itinerary destination
 DELETE http://localhost:8000/trips/1/destinations/3
 
-### 删除不存在的目的地（预期 404）
+### Delete non-existent destinations (expected 404)
 DELETE http://localhost:8000/trips/1/destinations/9999
 
 
 ### ========== Statistics ==========
 
-### 获取用户统计数据
+### Obtain user statistics
 GET http://localhost:8000/stats?user_id=1

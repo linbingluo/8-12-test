@@ -546,7 +546,7 @@ def update_trip(trip_id: int, trip_data: dict):
         db.close()
         raise HTTPException(status_code=404, detail="Trip not found")
     
-    # 更新字段
+    # Update field
     if "title" in trip_data:
         trip.title = trip_data["title"]
     if "date_range" in trip_data:
