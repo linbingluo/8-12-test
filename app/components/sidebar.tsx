@@ -2,9 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setIsAdmin(user.role === "admin");
+    }
+  }, []);
 
   const menuItems = [
     { href: "/home", label: "Home", icon: "🏠" },
@@ -47,6 +57,20 @@ export default function Sidebar() {
           })}
         </nav>
       </div>
+
+      {/* Admin Entry */}
+      {isAdmin && (
+        <div className="mt-8">
+          <p className="text-xs font-semibold text-gray-500 mb-4">ADMIN</p>
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition font-semibold"
+          >
+            <span>🛡️</span>
+            <span>Admin Panel</span>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

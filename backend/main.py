@@ -904,6 +904,83 @@ def delete_favorite(favorite_id: int, user_id: int) -> dict:
 
 
 
+# ========== Admin API ==========
+
+def _require_admin(requester_id: int, db):
+    """Raise 403 if the requester is not an admin."""
+    requester = db.query(User).filter(User.id == requester_id).first()
+    if not requester or requester.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+
+class AdminUserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+
+
+@app.get("/admin/users")
+def admin_list_users(requester_id: int):
+    """List all users. Requester must be admin."""
+    db = SessionLocal()
+    try:
+        _require_admin(requester_id, db)
+        users = db.query(User).all()
+        return [
+            {
+                "id": u.id,
+                "username": u.username,
+                "email": u.email,
+                "role": u.role or "user",
+                "created_at": u.created_at,
+            }
+            for u in users
+        ]
+    finally:
+        db.close()
+
+
+@app.put("/admin/users/{user_id}")
+def admin_update_user(user_id: int, data: AdminUserUpdate, requester_id: int):
+    """Update a user's info or role. Requester must be admin."""
+    db = SessionLocal()
+    try:
+        _require_admin(requester_id, db)
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if data.username is not None:
+            user.username = data.username
+        if data.email is not None:
+            user.email = data.email
+        if data.role is not None:
+            if data.role not in ("admin", "user"):
+                raise HTTPException(status_code=400, detail="Role must be 'admin' or 'user'")
+            user.role = data.role
+        db.commit()
+        return {"id": user.id, "username": user.username, "email": user.email, "role": user.role}
+    finally:
+        db.close()
+
+
+@app.delete("/admin/users/{user_id}")
+def admin_delete_user(user_id: int, requester_id: int):
+    """Delete a user. Requester must be admin."""
+    db = SessionLocal()
+    try:
+        _require_admin(requester_id, db)
+        if user_id == requester_id:
+            raise HTTPException(status_code=400, detail="Cannot delete yourself")
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        db.delete(user)
+        db.commit()
+        return {"message": "User deleted successfully"}
+    finally:
+        db.close()
+
+
 # ========== Main Program Entry ==========
 if __name__ == "__main__":
     import uvicorn

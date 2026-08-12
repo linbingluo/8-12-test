@@ -31,8 +31,12 @@ export default function LoginPage() {
        //Check if it is successful
        if (data.message === 'Login successful' || data.message === '登录成功') {
         localStorage.setItem('user', JSON.stringify(data.user));
-        console.log('Login successful, preparing to redirect to /home');
-        router.replace('/home');
+        console.log('Login successful, preparing to redirect');
+        if (data.user?.role === 'admin') {
+          router.replace('/admin');
+        } else {
+          router.replace('/home');
+        }
        } else {
         setError(data.message || 'Login failed');
        }
