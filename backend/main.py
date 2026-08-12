@@ -8,6 +8,9 @@ from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 import os
+import hashlib
+import hmac
+import logging
 
 # ========== Initialize FastAPI Application ==========
 app = FastAPI(title="Travel Planner API")
@@ -39,7 +42,27 @@ Base = declarative_base()
 
 DEFAULT_ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@example.com")
 DEFAULT_ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-DEFAULT_ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123456")
+DEFAULT_ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+logger = logging.getLogger(__name__)
+
+def _hash_password(raw_password: str) -> str:
+    salt = os.urandom(16)
+    hashed = hashlib.scrypt(raw_password.encode("utf-8"), salt=salt, n=2**14, r=8, p=1)
+    return f"scrypt${salt.hex()}${hashed.hex()}"
+
+def _verify_password(stored_password: str, input_password: str) -> bool:
+    if stored_password and stored_password.startswith("scrypt$"):
+        try:
+            _, salt_hex, hash_hex = stored_password.split("$", 2)
+            salt = bytes.fromhex(salt_hex)
+            expected_hash = bytes.fromhex(hash_hex)
+        except ValueError:
+            return False
+        input_hash = hashlib.scrypt(input_password.encode("utf-8"), salt=salt, n=2**14, r=8, p=1)
+        return hmac.compare_digest(input_hash, expected_hash)
+    if not stored_password:
+        return False
+    return hmac.compare_digest(str(stored_password), str(input_password))
 
 # ========== Data Models ==========
 
@@ -173,13 +196,26 @@ def _migrate_users_table():
         cursor.execute("ALTER TABLE users ADD COLUMN home_image_url VARCHAR DEFAULT ''")
     if columns and "role" not in columns:
         cursor.execute("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user'")
-    cursor.execute("UPDATE users SET role = 'user' WHERE role IS NULL OR role = ''")
+        cursor.execute("UPDATE users SET role = 'user' WHERE role IS NULL OR role = ''")
+    elif columns and "role" in columns:
+        cursor.execute("SELECT COUNT(1) FROM users WHERE role IS NULL OR role = ''")
+        missing_role_count = cursor.fetchone()[0]
+        if missing_role_count > 0:
+            cursor.execute("UPDATE users SET role = 'user' WHERE role IS NULL OR role = ''")
     conn.commit()
     conn.close()
 _migrate_users_table()
 
 def _ensure_default_admin():
     """Create a default admin account if it does not exist."""
+    if not DEFAULT_ADMIN_PASSWORD:
+        logger.warning("ADMIN_PASSWORD is not set; skipping default admin bootstrap.")
+        return
+    if DEFAULT_ADMIN_EMAIL == "admin@example.com" or DEFAULT_ADMIN_USERNAME == "admin":
+        logger.warning(
+            "Using default admin identity. Set ADMIN_EMAIL and ADMIN_USERNAME for production."
+        )
+
     db = SessionLocal()
     try:
         admin_user = db.query(User).filter(User.email == DEFAULT_ADMIN_EMAIL).first()
@@ -191,6 +227,10 @@ def _ensure_default_admin():
 
         existing_username = db.query(User).filter(User.username == DEFAULT_ADMIN_USERNAME).first()
         if existing_username:
+            logger.warning(
+                "Admin bootstrap skipped: username "
+                f"'{DEFAULT_ADMIN_USERNAME}' is already used by another account."
+            )
             return
 
         db_admin = User(
@@ -198,7 +238,7 @@ def _ensure_default_admin():
             username=DEFAULT_ADMIN_USERNAME,
             role="admin",
         )
-        db_admin.password = DEFAULT_ADMIN_PASSWORD
+        db_admin.password = _hash_password(DEFAULT_ADMIN_PASSWORD)
         db.add(db_admin)
         db.commit()
     finally:
@@ -340,12 +380,14 @@ def register(user: UserRegister):
         return {"error": "Username already exists"}
     
     # Create a new user
+    hashed_password = _hash_password(user.password)
     db_user = User(
         email=user.email,
         username=user.username,
         role="user",
-        password=user.password  # Not encrypted for now
+        password=user.password  #         
     )
+    db_user.password = hashed_password
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -374,9 +416,13 @@ def login(user: UserLogin):
         return {"error": "Email does not exist"}
     
     # Verify password
-    if db_user.password != user.password:
+    if not _verify_password(db_user.password, user.password):
         db.close()
         return {"error": "Incorrect password"}
+
+    if db_user.password and not db_user.password.startswith("scrypt$"):
+        db_user.password = _hash_password(user.password)
+        db.commit()
     
     db.close()
     
@@ -433,7 +479,7 @@ def update_user(user_id: int, user_data: UserUpdate):
     
     # Update password
     if user_data.password:
-        user.password = user_data.password
+        user.password = _hash_password(user_data.password)
 
     # Update email
     if user_data.email:
