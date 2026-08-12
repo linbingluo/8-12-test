@@ -11,6 +11,7 @@ function AdminSidebar() {
   const menuItems = [
     { href: "/admin", label: "Dashboard", icon: "📊" },
     { href: "/admin/users", label: "User Management", icon: "👥" },
+    { href: "/admin/trips", label: "Trip Management", icon: "✈️" },
     { href: "/admin/destinations", label: "Destinations", icon: "🌍" },
   ];
 

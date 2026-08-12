@@ -981,6 +981,48 @@ def admin_delete_user(user_id: int, requester_id: int):
         db.close()
 
 
+@app.get("/admin/trips")
+def admin_list_trips(requester_id: int):
+    """List all trips across all users. Requester must be admin."""
+    db = SessionLocal()
+    try:
+        _require_admin(requester_id, db)
+        trips = db.query(Trip).all()
+        users = {u.id: u.username for u in db.query(User).all()}
+        return [
+            {
+                "id": t.id,
+                "user_id": t.user_id,
+                "username": users.get(t.user_id, "Unknown"),
+                "title": t.title,
+                "date_range": t.date_range,
+                "destinations_count": t.destinations_count,
+                "budget": t.budget,
+                "status": t.status,
+                "created_at": t.created_at,
+            }
+            for t in trips
+        ]
+    finally:
+        db.close()
+
+
+@app.delete("/admin/trips/{trip_id}")
+def admin_delete_trip(trip_id: int, requester_id: int):
+    """Delete any trip. Requester must be admin."""
+    db = SessionLocal()
+    try:
+        _require_admin(requester_id, db)
+        trip = db.query(Trip).filter(Trip.id == trip_id).first()
+        if not trip:
+            raise HTTPException(status_code=404, detail="Trip not found")
+        db.delete(trip)
+        db.commit()
+        return {"message": "Trip deleted successfully"}
+    finally:
+        db.close()
+
+
 # ========== Main Program Entry ==========
 if __name__ == "__main__":
     import uvicorn
