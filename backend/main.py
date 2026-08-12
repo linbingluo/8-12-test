@@ -7,6 +7,10 @@ from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import datetime
+import os
+import hashlib
+import hmac
+import logging
 
 # ========== Initialize FastAPI Application ==========
 app = FastAPI(title="Travel Planner API")
@@ -36,6 +40,30 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
+DEFAULT_ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@example.com")
+DEFAULT_ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+DEFAULT_ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+logger = logging.getLogger(__name__)
+
+def _hash_password(raw_password: str) -> str:
+    salt = os.urandom(16)
+    hashed = hashlib.scrypt(raw_password.encode("utf-8"), salt=salt, n=2**14, r=8, p=1)
+    return f"scrypt${salt.hex()}${hashed.hex()}"
+
+def _verify_password(stored_password: str, input_password: str) -> bool:
+    if stored_password and stored_password.startswith("scrypt$"):
+        try:
+            _, salt_hex, hash_hex = stored_password.split("$", 2)
+            salt = bytes.fromhex(salt_hex)
+            expected_hash = bytes.fromhex(hash_hex)
+        except ValueError:
+            return False
+        input_hash = hashlib.scrypt(input_password.encode("utf-8"), salt=salt, n=2**14, r=8, p=1)
+        return hmac.compare_digest(input_hash, expected_hash)
+    if not stored_password:
+        return False
+    return hmac.compare_digest(str(stored_password), str(input_password))
+
 # ========== Data Models ==========
 
 # ========== User Model ==========
@@ -46,6 +74,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
+    role = Column(String, default="user")
     home_image_url = Column(String, default="")
     created_at = Column(String, default=lambda: datetime.now().isoformat())
 
@@ -156,7 +185,7 @@ def _migrate_trips_table():
 _migrate_trips_table()
 
 def _migrate_users_table():
-    """Ensure users table contains home_image_url column for home cover images."""
+    """Ensure users table contains required columns."""
     import sqlite3
     db_path = DATABASE_URL.replace("sqlite:///", "")
     conn = sqlite3.connect(db_path)
@@ -165,9 +194,56 @@ def _migrate_users_table():
     columns = {row[1] for row in cursor.fetchall()}
     if columns and "home_image_url" not in columns:
         cursor.execute("ALTER TABLE users ADD COLUMN home_image_url VARCHAR DEFAULT ''")
-        conn.commit()
+    if columns and "role" not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user'")
+        cursor.execute("UPDATE users SET role = 'user' WHERE role IS NULL OR role = ''")
+    elif columns and "role" in columns:
+        cursor.execute("SELECT COUNT(1) FROM users WHERE role IS NULL OR role = ''")
+        missing_role_count = cursor.fetchone()[0]
+        if missing_role_count > 0:
+            cursor.execute("UPDATE users SET role = 'user' WHERE role IS NULL OR role = ''")
+    conn.commit()
     conn.close()
 _migrate_users_table()
+
+def _ensure_default_admin():
+    """Create a default admin account if it does not exist."""
+    if not DEFAULT_ADMIN_PASSWORD:
+        logger.warning("ADMIN_PASSWORD is not set; skipping default admin bootstrap.")
+        return
+    if DEFAULT_ADMIN_EMAIL == "admin@example.com" or DEFAULT_ADMIN_USERNAME == "admin":
+        logger.warning(
+            "Using default admin identity. Set ADMIN_EMAIL and ADMIN_USERNAME for production."
+        )
+
+    db = SessionLocal()
+    try:
+        admin_user = db.query(User).filter(User.email == DEFAULT_ADMIN_EMAIL).first()
+        if admin_user:
+            if admin_user.role != "admin":
+                admin_user.role = "admin"
+                db.commit()
+            return
+
+        existing_username = db.query(User).filter(User.username == DEFAULT_ADMIN_USERNAME).first()
+        if existing_username:
+            logger.warning(
+                "Admin bootstrap skipped: username "
+                f"'{DEFAULT_ADMIN_USERNAME}' is already used by another account."
+            )
+            return
+
+        db_admin = User(
+            email=DEFAULT_ADMIN_EMAIL,
+            username=DEFAULT_ADMIN_USERNAME,
+            role="admin",
+        )
+        db_admin.password = _hash_password(DEFAULT_ADMIN_PASSWORD)
+        db.add(db_admin)
+        db.commit()
+    finally:
+        db.close()
+_ensure_default_admin()
 
 
 # ========== Pydantic Models ==========
@@ -185,6 +261,7 @@ class UserResponse(BaseModel):
     id: int
     email: str
     username: str
+    role: str = "user"
     home_image_url: str = ""
     created_at: str
     
@@ -303,11 +380,14 @@ def register(user: UserRegister):
         return {"error": "Username already exists"}
     
     # Create a new user
+    hashed_password = _hash_password(user.password)
     db_user = User(
         email=user.email,
         username=user.username,
-        password=user.password  # Not encrypted for now
+        role="user",
+        password=user.password  #         
     )
+    db_user.password = hashed_password
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -318,7 +398,8 @@ def register(user: UserRegister):
         "user": {
             "id": db_user.id,
             "email": db_user.email,
-            "username": db_user.username
+            "username": db_user.username,
+            "role": db_user.role,
         }
     }
 
@@ -335,9 +416,13 @@ def login(user: UserLogin):
         return {"error": "Email does not exist"}
     
     # Verify password
-    if db_user.password != user.password:
+    if not _verify_password(db_user.password, user.password):
         db.close()
         return {"error": "Incorrect password"}
+
+    if db_user.password and not db_user.password.startswith("scrypt$"):
+        db_user.password = _hash_password(user.password)
+        db.commit()
     
     db.close()
     
@@ -346,7 +431,8 @@ def login(user: UserLogin):
         "user": {
             "id": db_user.id,
             "email": db_user.email,
-            "username": db_user.username
+            "username": db_user.username,
+            "role": db_user.role,
         }
     }
 
@@ -364,6 +450,7 @@ def get_user(user_id: int):
         "id": user.id,
         "email": user.email,
         "username": user.username,
+        "role": user.role or "user",
         "home_image_url": user.home_image_url or "",
         "created_at": user.created_at
     }
@@ -392,7 +479,7 @@ def update_user(user_id: int, user_data: UserUpdate):
     
     # Update password
     if user_data.password:
-        user.password = user_data.password
+        user.password = _hash_password(user_data.password)
 
     # Update email
     if user_data.email:
@@ -417,6 +504,7 @@ def update_user(user_id: int, user_data: UserUpdate):
             "id": user.id,
             "email": user.email,
             "username": user.username,
+            "role": user.role or "user",
             "home_image_url": user.home_image_url or ""
         }
     }
@@ -814,6 +902,125 @@ def delete_favorite(favorite_id: int, user_id: int) -> dict:
     db.close()
     return {"message": "Favorite deleted successfully"}
 
+
+
+# ========== Admin API ==========
+
+def _require_admin(requester_id: int, db):
+    """Raise 403 if the requester is not an admin."""
+    requester = db.query(User).filter(User.id == requester_id).first()
+    if not requester or requester.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+
+class AdminUserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+
+
+@app.get("/admin/users")
+def admin_list_users(requester_id: int):
+    """List all users. Requester must be admin."""
+    db = SessionLocal()
+    try:
+        _require_admin(requester_id, db)
+        users = db.query(User).all()
+        return [
+            {
+                "id": u.id,
+                "username": u.username,
+                "email": u.email,
+                "role": u.role or "user",
+                "created_at": u.created_at,
+            }
+            for u in users
+        ]
+    finally:
+        db.close()
+
+
+@app.put("/admin/users/{user_id}")
+def admin_update_user(user_id: int, data: AdminUserUpdate, requester_id: int):
+    """Update a user's info or role. Requester must be admin."""
+    db = SessionLocal()
+    try:
+        _require_admin(requester_id, db)
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if data.username is not None:
+            user.username = data.username
+        if data.email is not None:
+            user.email = data.email
+        if data.role is not None:
+            if data.role not in ("admin", "user"):
+                raise HTTPException(status_code=400, detail="Role must be 'admin' or 'user'")
+            user.role = data.role
+        db.commit()
+        return {"id": user.id, "username": user.username, "email": user.email, "role": user.role}
+    finally:
+        db.close()
+
+
+@app.delete("/admin/users/{user_id}")
+def admin_delete_user(user_id: int, requester_id: int):
+    """Delete a user. Requester must be admin."""
+    db = SessionLocal()
+    try:
+        _require_admin(requester_id, db)
+        if user_id == requester_id:
+            raise HTTPException(status_code=400, detail="Cannot delete yourself")
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        db.delete(user)
+        db.commit()
+        return {"message": "User deleted successfully"}
+    finally:
+        db.close()
+
+
+@app.get("/admin/trips")
+def admin_list_trips(requester_id: int):
+    """List all trips across all users. Requester must be admin."""
+    db = SessionLocal()
+    try:
+        _require_admin(requester_id, db)
+        trips = db.query(Trip).all()
+        users = {u.id: u.username for u in db.query(User).all()}
+        return [
+            {
+                "id": t.id,
+                "user_id": t.user_id,
+                "username": users.get(t.user_id, "Unknown"),
+                "title": t.title,
+                "date_range": t.date_range,
+                "destinations_count": t.destinations_count,
+                "budget": t.budget,
+                "status": t.status,
+                "created_at": t.created_at,
+            }
+            for t in trips
+        ]
+    finally:
+        db.close()
+
+
+@app.delete("/admin/trips/{trip_id}")
+def admin_delete_trip(trip_id: int, requester_id: int):
+    """Delete any trip. Requester must be admin."""
+    db = SessionLocal()
+    try:
+        _require_admin(requester_id, db)
+        trip = db.query(Trip).filter(Trip.id == trip_id).first()
+        if not trip:
+            raise HTTPException(status_code=404, detail="Trip not found")
+        db.delete(trip)
+        db.commit()
+        return {"message": "Trip deleted successfully"}
+    finally:
+        db.close()
 
 
 # ========== Main Program Entry ==========
