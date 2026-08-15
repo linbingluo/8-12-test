@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CreateTripModal from '../../components/CreateTripModel';
 import StatCard from '../../components/StatCard';
@@ -215,6 +214,15 @@ export default function MainHomePage() {
     await saveHomeImage('');
   };
 
+  const handleBrowseDestinations = () => {
+    router.push('/destinations');
+    window.setTimeout(() => {
+      if (window.location.pathname !== '/destinations') {
+        window.location.assign('/destinations');
+      }
+    }, 300);
+  };
+
   if (!user) {
     return <div className="text-gray-600">loading...</div>;
   }
@@ -236,7 +244,7 @@ export default function MainHomePage() {
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-10 mb-8 flex gap-12">
-          <div className="flex-1">
+          <div className="flex-1 relative z-10">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Start Your Next Adventure</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               Create itineraries, schedule dates, manage budgets, and add your favorite destinations to your trips.
@@ -248,12 +256,13 @@ export default function MainHomePage() {
               >
                 Start Planning
               </button>
-              <Link
-                href="/destinations"
-                className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
+              <button
+                type="button"
+                onClick={handleBrowseDestinations}
+                className="inline-flex items-center justify-center border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 cursor-pointer transition"
               >
                 Browse Destinations
-              </Link>
+              </button>
             </div>
           </div>
           {/* <div className="relative w-80 h-64 overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-100">
@@ -275,7 +284,7 @@ export default function MainHomePage() {
               </div>
             )}
             <div className="absolute top-3 right-3 z-10 flex items-center gap-2 rounded-full bg-white/85 px-2 py-1 shadow-sm"> */}
-          <div className="w-80">
+          <div className="w-80 relative z-0">
             <div className="relative h-64 overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-100">
               {homeImageUrl ? (
                 <img
