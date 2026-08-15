@@ -25,6 +25,17 @@ export type RecentTrip = {
   status: string;
 };
 
+export type DestinationLibraryItem = {
+  id: number;
+  name: string;
+  description: string;
+  rating: number;
+  country: string;
+  tags: string;
+  status: string;
+  image_url: string;
+};
+
 export async function getUser(userId: number): Promise<UserDetail> {
   const response = await fetch(`${API_BASE_URL}/user/${userId}`);
   const data = await response.json();
@@ -142,20 +153,19 @@ export async function deleteTripDestination(tripId: number, destId: number) {
 }
 
 // ===== Destination Library =====
-export async function getDestinations() {
+export async function getDestinations(): Promise<DestinationLibraryItem[]> {
   const response = await fetch(`${API_BASE_URL}/destinations`);
   return response.json();
 }
 
-export async function createDestination(dest: {
-  name: string;
-  description: string;
-  rating: number;
-  country: string;
-  tags: string;
-  status: string;
-  image_url: string;
-}) {
+export async function getDestination(id: number): Promise<DestinationLibraryItem> {
+  const response = await fetch(`${API_BASE_URL}/destinations/${id}`);
+  const data = await response.json();
+  if (!response.ok || data?.error) throw new Error(data?.error || "Failed to fetch destination");
+  return data;
+}
+
+export async function createDestination(dest: Omit<DestinationLibraryItem, "id">) {
   const response = await fetch(`${API_BASE_URL}/destinations`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -165,15 +175,7 @@ export async function createDestination(dest: {
   return response.json();
 }
 
-export async function updateDestination(id: number, dest: {
-  name: string;
-  description: string;
-  rating: number;
-  country: string;
-  tags: string;
-  status: string;
-  image_url: string;
-}) {
+export async function updateDestination(id: number, dest: Omit<DestinationLibraryItem, "id">) {
   const response = await fetch(`${API_BASE_URL}/destinations/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

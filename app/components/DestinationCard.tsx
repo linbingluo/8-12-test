@@ -11,6 +11,7 @@ interface DestinationCardProps {
   tags: string;
   status: string;
   image_url: string;
+  onDetails: () => void;
   onEdit: () => void;
   onDeleted: () => void;
   onFavorite?: () => void;
@@ -24,6 +25,7 @@ export default function DestinationCard({
   rating,
   country,
   tags,
+  onDetails,
   onEdit,
   onDeleted,
   onFavorite,
@@ -94,7 +96,10 @@ export default function DestinationCard({
 
         {/* Action buttons */}
         <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-          <button className="flex-1 border border-gray-300 text-gray-700 text-sm py-2 rounded hover:bg-gray-50 transition">
+          <button
+            onClick={onDetails}
+            className="flex-1 border border-gray-300 text-gray-700 text-sm py-2 rounded hover:bg-gray-50 transition"
+          >
             Details
           </button>
           {onFavorite && (

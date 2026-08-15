@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { getDestinations, deleteDestination, createFavorite, getFavorites } from "@/app/lib/api";
+import {
+  getDestinations,
+  deleteDestination,
+  createFavorite,
+  getFavorites,
+  type DestinationLibraryItem,
+} from "@/app/lib/api";
 import DestinationCard from "@/app/components/DestinationCard";
 import CreateDestinationModal from "@/app/components/CreateDestinationModal";
 import EditDestinationModal from "@/app/components/EditDestinationModal";
@@ -19,17 +25,6 @@ const MapView = dynamic(() => import("@/app/components/MapView"), {
   ),
 });
 
-type Destination = {
-  id: number;
-  name: string;
-  description: string;
-  rating: number;
-  country: string;
-  tags: string;
-  status: string;
-  image_url: string;
-};
-
 export default function DestinationsPage() {
   const router = useRouter();
   const [userId] = useState<number | null>(() => {
@@ -43,7 +38,7 @@ export default function DestinationsPage() {
       return null;
     }
   });
-  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [destinations, setDestinations] = useState<DestinationLibraryItem[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -52,7 +47,7 @@ export default function DestinationsPage() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editingDest, setEditingDest] = useState<Destination | null>(null);
+  const [editingDest, setEditingDest] = useState<DestinationLibraryItem | null>(null);
 
   // useEffect(() => {
   //   const userData = localStorage.getItem("user");
@@ -214,6 +209,7 @@ export default function DestinationsPage() {
                   <DestinationCard
                     key={dest.id}
                     {...dest}
+                    onDetails={() => router.push(`/destinations/${dest.id}`)}
                     onEdit={() => {
                       setEditingDest(dest);
                       setIsEditOpen(true);
