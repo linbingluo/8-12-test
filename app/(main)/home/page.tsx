@@ -247,7 +247,10 @@ export default function MainHomePage() {
               >
                 Start Planning
               </button>
-              <button className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition">
+              <button
+                onClick={() => router.push('/destinations')}
+                className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
                 Browse Destinations
               </button>
             </div>
