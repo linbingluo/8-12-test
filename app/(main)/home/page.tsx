@@ -214,13 +214,13 @@ export default function MainHomePage() {
     await saveHomeImage('');
   };
 
-  const handleBrowseDestinations = () => {
-    router.push('/destinations');
-    window.setTimeout(() => {
-      if (window.location.pathname !== '/destinations') {
-        window.location.assign('/destinations');
-      }
-    }, 300);
+  const handleBrowseDestinations = async () => {
+    try {
+      await router.push('/destinations');
+    } catch (error) {
+      console.error('Client-side navigation to /destinations failed:', error);
+      window.location.assign('/destinations');
+    }
   };
 
   if (!user) {
@@ -258,7 +258,7 @@ export default function MainHomePage() {
               </button>
               <button
                 type="button"
-                onClick={handleBrowseDestinations}
+                onClick={() => void handleBrowseDestinations()}
                 className="inline-flex items-center justify-center border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 cursor-pointer transition"
               >
                 Browse Destinations
