@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CreateTripModal from '../../components/CreateTripModel';
 import StatCard from '../../components/StatCard';
@@ -247,12 +248,12 @@ export default function MainHomePage() {
               >
                 Start Planning
               </button>
-              <button
-                onClick={() => router.push('/destinations')}
+              <Link
+                href="/destinations"
                 className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
               >
                 Browse Destinations
-              </button>
+              </Link>
             </div>
           </div>
           {/* <div className="relative w-80 h-64 overflow-hidden rounded-lg border border-dashed border-gray-300 bg-gray-100">
