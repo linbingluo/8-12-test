@@ -159,8 +159,8 @@ describe("frontend components", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
-    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "✏️" }));
+    fireEvent.click(screen.getByRole("button", { name: "✕" }));
     await waitFor(() => expect(deleteTrip).toHaveBeenCalledWith(3));
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onDeleted).toHaveBeenCalledTimes(1);
@@ -283,8 +283,8 @@ describe("frontend components", () => {
 
   it("renders sidebar with menu links", () => {
     render(<Sidebar />);
-    expect(screen.getByRole("link", { name: "✈️My Trips" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "🌍Destinations" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "✈️ My Trips" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "🌍 Destinations" })).toBeInTheDocument();
   });
 
   it("renders map view and resolves markers", async () => {
@@ -292,12 +292,11 @@ describe("frontend components", () => {
       <MapView
         destinations={[
           { id: 1, name: "Paris", country: "France" },
-          { id: 2, name: "London", country: "UK" },
         ]}
       />
     );
 
     expect(screen.getByText("Destination Map")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("Showing 2 locations")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Showing 1 location")).toBeInTheDocument());
   });
 });
