@@ -40,6 +40,8 @@ export default function DestinationDetailPage() {
   const tagList = destination?.tags
     ? destination.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
     : [];
+  const countryLabel = destination?.country || "Not provided";
+  const ratingValue = destination ? Math.max(0, Math.min(5, Math.round(destination.rating))) : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -99,7 +101,7 @@ export default function DestinationDetailPage() {
                 </div>
                 <div className="flex flex-col gap-2 sm:items-end">
                   <span className="border border-gray-300 text-gray-600 text-sm px-3 py-1 rounded-full">
-                    {destination.country || "Unknown country"}
+                    {countryLabel}
                   </span>
                   <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 capitalize">
                     {destination.status}
@@ -111,13 +113,13 @@ export default function DestinationDetailPage() {
                 <div className="rounded-xl border border-gray-200 p-4">
                   <p className="text-sm text-gray-500 mb-2">Rating</p>
                   <p className="text-2xl text-yellow-400">
-                    {"★".repeat(destination.rating)}
-                    {"☆".repeat(Math.max(0, 5 - destination.rating))}
+                    {"★".repeat(ratingValue)}
+                    {"☆".repeat(Math.max(0, 5 - ratingValue))}
                   </p>
                 </div>
                 <div className="rounded-xl border border-gray-200 p-4">
                   <p className="text-sm text-gray-500 mb-2">Country</p>
-                  <p className="text-lg font-semibold text-gray-900">{destination.country || "Not provided"}</p>
+                  <p className="text-lg font-semibold text-gray-900">{countryLabel}</p>
                 </div>
                 <div className="rounded-xl border border-gray-200 p-4">
                   <p className="text-sm text-gray-500 mb-2">Status</p>
@@ -129,9 +131,9 @@ export default function DestinationDetailPage() {
                 <p className="text-sm text-gray-500 mb-3">Tags</p>
                 {tagList.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {tagList.map((tag) => (
+                    {tagList.map((tag, index) => (
                       <span
-                        key={tag}
+                        key={`${tag}-${index}`}
                         className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
                       >
                         {tag}
