@@ -9,14 +9,13 @@ export default function DestinationDetailPage() {
   const params = useParams();
   const router = useRouter();
   const destinationId = Number(params.id);
+  const invalidDestinationId = !Number.isInteger(destinationId) || destinationId <= 0;
   const [destination, setDestination] = useState<DestinationLibraryItem | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!invalidDestinationId);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!destinationId) {
-      setError("Invalid destination.");
-      setLoading(false);
+    if (invalidDestinationId) {
       return;
     }
 
@@ -35,7 +34,7 @@ export default function DestinationDetailPage() {
     };
 
     loadDestination();
-  }, [destinationId]);
+  }, [destinationId, invalidDestinationId]);
 
   const resolvedImageUrl = normalizeImageUrl(destination?.image_url || "");
   const tagList = destination?.tags
@@ -52,7 +51,12 @@ export default function DestinationDetailPage() {
           Back to Destinations
         </button>
 
-        {loading ? (
+        {invalidDestinationId ? (
+          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+            <p className="text-lg font-semibold text-gray-900 mb-2">Destination unavailable</p>
+            <p className="text-sm text-gray-500">Invalid destination.</p>
+          </div>
+        ) : loading ? (
           <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
             Loading destination...
           </div>
