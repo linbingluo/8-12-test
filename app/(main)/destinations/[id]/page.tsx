@@ -8,8 +8,13 @@ import { normalizeImageUrl } from "@/app/lib/image";
 export default function DestinationDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const destinationId = Number(params.id);
-  const invalidDestinationId = !Number.isInteger(destinationId) || destinationId <= 0;
+  const rawDestinationId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const destinationId = Number.parseInt(rawDestinationId ?? "", 10);
+  const invalidDestinationId =
+    !rawDestinationId ||
+    Number.isNaN(destinationId) ||
+    destinationId <= 0 ||
+    String(destinationId) !== rawDestinationId;
   const [destination, setDestination] = useState<DestinationLibraryItem | null>(null);
   const [loading, setLoading] = useState(!invalidDestinationId);
   const [error, setError] = useState("");
