@@ -43,7 +43,7 @@ export default function DestinationDetailPage() {
 
   const resolvedImageUrl = normalizeImageUrl(destination?.image_url || "");
   const tagList = destination?.tags
-    ? destination.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+    ? Array.from(new Set(destination.tags.split(",").map((tag) => tag.trim()).filter(Boolean)))
     : [];
   const countryLabel = destination?.country || "Not provided";
   const ratingValue = destination ? Math.max(0, Math.min(5, Math.round(destination.rating))) : 0;
@@ -136,9 +136,9 @@ export default function DestinationDetailPage() {
                 <p className="text-sm text-gray-500 mb-3">Tags</p>
                 {tagList.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {tagList.map((tag, index) => (
+                    {tagList.map((tag) => (
                       <span
-                        key={`${tag}-${index}`}
+                        key={tag}
                         className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
                       >
                         {tag}
