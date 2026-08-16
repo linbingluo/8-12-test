@@ -1,10 +1,8 @@
 "use client";
 
 import { normalizeImageUrl } from "@/app/lib/image";
-import { useRouter } from "next/navigation";
 
 interface DestinationCardProps {
-  id: number;
   name: string;
   description: string;
   rating: number;
@@ -14,12 +12,9 @@ interface DestinationCardProps {
   image_url: string;
   onEdit: () => void;
   onDeleted: () => void;
-  onFavorite?: () => void;
-  favoriteDisabled?: boolean;
 }
 
 export default function DestinationCard({
-  id,
   image_url,
   name,
   description,
@@ -28,10 +23,7 @@ export default function DestinationCard({
   tags,
   onEdit,
   onDeleted,
-  onFavorite,
-  favoriteDisabled = false,
 }: DestinationCardProps) {
-  const router = useRouter();
   const tagList = tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
   const resolvedImageUrl = normalizeImageUrl(image_url);
 
@@ -97,25 +89,6 @@ export default function DestinationCard({
 
         {/* Action buttons */}
         <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-          <button
-            onClick={() => router.push(`/destinations/${id}`)}
-            className="flex-1 border border-gray-300 text-gray-700 text-sm py-2 rounded hover:bg-gray-50 transition"
-          >
-            Details
-          </button>
-          {onFavorite && (
-            <button
-              onClick={onFavorite}
-              disabled={favoriteDisabled}
-              className={`flex-1 border text-sm py-2 rounded transition ${
-                favoriteDisabled
-                  ? "border-gray-300 text-gray-400 cursor-not-allowed"
-                  : "border-gray-300 text-gray-700 hover:bg-yellow-50 hover:text-yellow-600"
-              }`}
-            >
-              Favorite
-            </button>
-          )}
           <button
             onClick={onEdit}
             className="flex-1 border border-gray-300 text-gray-700 text-sm py-2 rounded hover:bg-gray-50 transition"

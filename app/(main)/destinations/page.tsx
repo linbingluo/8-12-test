@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { getDestinations, deleteDestination, createFavorite, getFavorites } from "@/app/lib/api";
+import { getDestinations, deleteDestination } from "@/app/lib/api";
 import DestinationCard from "@/app/components/DestinationCard";
 import CreateDestinationModal from "@/app/components/CreateDestinationModal";
 import EditDestinationModal from "@/app/components/EditDestinationModal";
@@ -44,7 +44,6 @@ export default function DestinationsPage() {
     }
   });
   const [destinations, setDestinations] = useState<Destination[]>([]);
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -78,18 +77,6 @@ export default function DestinationsPage() {
     } finally {
       setLoading(false);
     }
-    if (resolvedUserId) {
-      try {
-        const favoritesData = await getFavorites(resolvedUserId);
-        setFavoriteIds(
-          Array.isArray(favoritesData)
-            ? favoritesData.map((item) => item.destination_id)
-            : []
-        );
-      } catch {
-        console.error("Failed to fetch favorites");
-      }
-    }
   }, [userId]);
 
   useEffect(() => {
@@ -110,21 +97,6 @@ export default function DestinationsPage() {
       await fetchDestinations();
     } catch {
       alert("Failed to delete, please try again.");
-    }
-  };
-
-  const handleFavorite = async (destinationId: number, destinationName: string) => {
-    if (!userId) {
-      alert("Please login first.");
-      router.replace("/login");
-      return;
-    }
-    try {
-      await createFavorite(userId, destinationId);
-      setFavoriteIds((prev) => [...prev, destinationId]);
-      alert(`Added "${destinationName}" to favorites.`);
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to add favorite");
     }
   };
 
@@ -219,8 +191,6 @@ export default function DestinationsPage() {
                       setIsEditOpen(true);
                     }}
                     onDeleted={() => handleDelete(dest.id, dest.name)}
-                    onFavorite={() => handleFavorite(dest.id, dest.name)}
-                    favoriteDisabled={favoriteIds.includes(dest.id)}
                   />
                 ))}
               </div>
