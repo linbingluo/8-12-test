@@ -11,32 +11,12 @@ type User = {
 };
 
 type Prefs = {
-  twoStep: boolean;
-  tripReminders: boolean;
   language: string;
   currency: string;
 };
 
 const LANGUAGES = ['English', '中文', 'Español', 'Français', 'Deutsch'];
 const CURRENCIES = ['CNY / ¥', 'USD / $', 'EUR / €', 'GBP / £', 'JPY / ¥'];
-
-function Toggle({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-        enabled ? 'bg-gray-800' : 'bg-gray-200'
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-          enabled ? 'translate-x-6' : 'translate-x-1'
-        }`}
-      />
-    </button>
-  );
-}
 
 function Modal({
   title,
@@ -68,8 +48,6 @@ export default function SettingsPage() {
   const [stats, setStats] = useState({ total_trips: 0, favorites: 0 });
 
   const [prefs, setPrefs] = useState<Prefs>({
-    twoStep: false,
-    tripReminders: false,
     language: 'English',
     currency: 'CNY / ¥',
   });
@@ -295,17 +273,6 @@ export default function SettingsPage() {
                     Edit
                   </button>
                 </div>
-                {/* Two-Step Verification */}
-                <div className="flex items-center justify-between px-4 py-4">
-                  <div>
-                    <p className="font-medium text-gray-900">Two-Step Verification</p>
-                    <p className="text-sm text-gray-400">Add extra protection to your account</p>
-                  </div>
-                  <Toggle
-                    enabled={prefs.twoStep}
-                    onChange={() => savePrefs({ ...prefs, twoStep: !prefs.twoStep })}
-                  />
-                </div>
               </div>
             </div>
 
@@ -338,17 +305,6 @@ export default function SettingsPage() {
                   >
                     Change
                   </button>
-                </div>
-                {/* Trip Reminders */}
-                <div className="flex items-center justify-between px-4 py-4">
-                  <div>
-                    <p className="font-medium text-gray-900">Trip Reminders</p>
-                    <p className="text-sm text-gray-400">Remind me 3 days before departure</p>
-                  </div>
-                  <Toggle
-                    enabled={prefs.tripReminders}
-                    onChange={() => savePrefs({ ...prefs, tripReminders: !prefs.tripReminders })}
-                  />
                 </div>
               </div>
             </div>
