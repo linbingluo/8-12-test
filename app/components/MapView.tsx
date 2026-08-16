@@ -46,6 +46,32 @@ function buildPopupContent(marker: MarkerItem) {
   return wrapper;
 }
 
+function syncMapMarkers(map: L.Map, markerLayer: L.LayerGroup, markers: MarkerItem[]) {
+  markerLayer.clearLayers();
+
+  markers.forEach((marker) => {
+    L.circleMarker([marker.lat, marker.lon], {
+      radius: 7,
+      color: "#1d4ed8",
+    })
+      .bindPopup(buildPopupContent(marker))
+      .addTo(markerLayer);
+  });
+
+  if (markers.length === 0) {
+    map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    return;
+  }
+
+  if (markers.length === 1) {
+    map.setView([markers[0].lat, markers[0].lon], 5);
+    return;
+  }
+
+  const bounds = L.latLngBounds(markers.map((marker) => [marker.lat, marker.lon] as L.LatLngTuple));
+  map.fitBounds(bounds, { padding: [24, 24] });
+}
+
 export default function MapView({ destinations }: MapViewProps) {
   const [markers, setMarkers] = useState<MarkerItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,6 +81,11 @@ export default function MapView({ destinations }: MapViewProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerLayerRef = useRef<L.LayerGroup | null>(null);
+  const markersRef = useRef<MarkerItem[]>([]);
+
+  useEffect(() => {
+    markersRef.current = markers;
+  }, [markers]);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -78,6 +109,7 @@ export default function MapView({ destinations }: MapViewProps) {
 
     mapRef.current = map;
     markerLayerRef.current = markerLayer;
+    syncMapMarkers(map, markerLayer, markersRef.current);
 
     return () => {
       markerLayer.clearLayers();
@@ -94,29 +126,7 @@ export default function MapView({ destinations }: MapViewProps) {
 
     const map = mapRef.current;
     const markerLayer = markerLayerRef.current;
-    markerLayer.clearLayers();
-
-    markers.forEach((marker) => {
-      L.circleMarker([marker.lat, marker.lon], {
-        radius: 7,
-        color: "#1d4ed8",
-      })
-        .bindPopup(buildPopupContent(marker))
-        .addTo(markerLayer);
-    });
-
-    if (markers.length === 0) {
-      map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
-      return;
-    }
-
-    if (markers.length === 1) {
-      map.setView([markers[0].lat, markers[0].lon], 5);
-      return;
-    }
-
-    const bounds = L.latLngBounds(markers.map((marker) => [marker.lat, marker.lon] as L.LatLngTuple));
-    map.fitBounds(bounds, { padding: [24, 24] });
+    syncMapMarkers(map, markerLayer, markers);
   }, [markers]);
 
   useEffect(() => {
