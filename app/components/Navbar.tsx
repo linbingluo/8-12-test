@@ -76,7 +76,7 @@ export default function Navbar() {
               <hr className="border-gray-200 mb-3" />
 
               <Link
-                href="/profile"
+                href="/settings"
                 onClick={() => setShowDropdown(false)}
                 className="block text-sm text-gray-700 hover:text-blue-500 mb-2"
               >
