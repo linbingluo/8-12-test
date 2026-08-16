@@ -166,7 +166,9 @@ export default function DestinationDetailPage() {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
             <div>
               <h1 className="text-4xl font-bold text-gray-900">{destination.name}</h1>
-              <p className="text-lg text-gray-500 mt-1">City</p>
+              <p className="text-lg text-gray-500 mt-1">
+                {destination.country ? `${destination.country} destination` : "Destination story"}
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 rounded-full text-sm border border-gray-300 text-gray-700 bg-white">
@@ -184,12 +186,6 @@ export default function DestinationDetailPage() {
             <span className="inline-flex items-center px-3 py-1 rounded-full border border-amber-300 bg-amber-50 text-amber-700 text-sm whitespace-nowrap">
               {"★".repeat(destination.rating)}
               {"☆".repeat(Math.max(0, 5 - destination.rating))}
-            </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full border border-gray-200 text-sm text-gray-700 whitespace-nowrap">
-              {destination.country || "Unknown"}
-            </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full border border-gray-200 text-sm text-gray-700 whitespace-nowrap">
-              {statusLabel}
             </span>
             {tagList.map((tag) => (
               <span
