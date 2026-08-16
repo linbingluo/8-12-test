@@ -44,7 +44,6 @@ function buildPopupContent(marker: MarkerItem) {
 }
 
 export default function MapView({ destinations }: MapViewProps) {
-  const [isMounted, setIsMounted] = useState(false);
   const [markers, setMarkers] = useState<MarkerItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -56,11 +55,7 @@ export default function MapView({ destinations }: MapViewProps) {
   const destinationList = useMemo(() => destinations, [destinations]);
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted || !mapContainerRef.current || mapRef.current) {
+    if (!mapContainerRef.current || mapRef.current) {
       return;
     }
 
@@ -90,7 +85,7 @@ export default function MapView({ destinations }: MapViewProps) {
       mapRef.current = null;
       container.innerHTML = "";
     };
-  }, [isMounted]);
+  }, []);
 
   useEffect(() => {
     if (!mapRef.current || !markerLayerRef.current) {
@@ -214,7 +209,7 @@ export default function MapView({ destinations }: MapViewProps) {
     <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-6">
       <h3 className="text-base font-semibold text-gray-900 mb-3">Destination Map</h3>
       <div className="w-full rounded-lg overflow-hidden border border-gray-200" style={{ height: "520px" }}>
-        {isMounted ? <div ref={mapContainerRef} className="h-full w-full" /> : <div className="h-full w-full bg-gray-50" />}
+        <div ref={mapContainerRef} className="h-full w-full bg-gray-50" />
       </div>
       <p className="text-xs text-gray-500 mt-3">
         {loading
