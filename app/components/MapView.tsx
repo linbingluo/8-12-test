@@ -16,6 +16,7 @@ type MarkerItem = DestinationMapItem & {
 
 const DEFAULT_CENTER: L.LatLngTuple = [20, 0];
 const DEFAULT_ZOOM = 2;
+// Nominatim usage policy requires no more than 1 request/second, with small safety margin.
 const GEOCODE_DELAY_MS = 1100;
 
 interface MapViewProps {
