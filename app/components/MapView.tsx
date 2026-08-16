@@ -147,7 +147,7 @@ export default function MapView({ destinations }: MapViewProps) {
     <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-6">
       <h3 className="text-base font-semibold text-gray-900 mb-3">Destination Map</h3>
       <div className="w-full rounded-lg overflow-hidden border border-gray-200" style={{ height: "520px" }}>
-        <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} style={{ height: "100%", width: "100%" }}>
+        <MapContainer key="map" center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} style={{ height: "100%", width: "100%" }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
