@@ -19,6 +19,7 @@ interface DestinationCardProps {
 }
 
 export default function DestinationCard({
+  id,
   image_url,
   name,
   description,
