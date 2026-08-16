@@ -38,9 +38,11 @@ function escapeHtml(value: string) {
 
 function buildPopupContent(marker: MarkerItem) {
   const name = escapeHtml(marker.name);
-  const country = marker.country ? `<div class="text-gray-600">${escapeHtml(marker.country)}</div>` : "";
+  const country = marker.country
+    ? `<div style="color: #4b5563;">${escapeHtml(marker.country)}</div>`
+    : "";
 
-  return `<div class="text-sm"><div class="font-semibold">${name}</div>${country}</div>`;
+  return `<div style="font-size: 0.875rem;"><div style="font-weight: 600;">${name}</div>${country}</div>`;
 }
 
 export default function MapView({ destinations }: MapViewProps) {
@@ -60,7 +62,6 @@ export default function MapView({ destinations }: MapViewProps) {
     }
 
     const container = mapContainerRef.current;
-    container.innerHTML = "";
 
     const map = L.map(container, {
       center: DEFAULT_CENTER,
@@ -83,7 +84,6 @@ export default function MapView({ destinations }: MapViewProps) {
       map.remove();
       markerLayerRef.current = null;
       mapRef.current = null;
-      container.innerHTML = "";
     };
   }, []);
 
