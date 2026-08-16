@@ -1,14 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
-
 
 type DestinationMapItem = {
   id: number;
   name: string;
-
   country: string;
 };
 
@@ -19,17 +16,102 @@ type MarkerItem = DestinationMapItem & {
 
 const DEFAULT_CENTER: L.LatLngTuple = [20, 0];
 const DEFAULT_ZOOM = 2;
-// Nominatim usage policy requires no more than 1 request/second, with small safety margin.
 const GEOCODE_DELAY_MS = 1100;
+const MAP_POPUP_OFFSET: L.PointTuple = [0, -10];
 
 interface MapViewProps {
   destinations: DestinationMapItem[];
 }
 
-function AutoFit({ markers }: { markers: MarkerItem[] }) {
-  const map = useMap();
+function getDestinationKey(destination: DestinationMapItem) {
+  return [destination.name, destination.country].filter(Boolean).join(", ").trim().toLowerCase();
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function buildPopupContent(marker: MarkerItem) {
+  const name = escapeHtml(marker.name);
+  const country = marker.country ? `<div class="text-gray-600">${escapeHtml(marker.country)}</div>` : "";
+
+  return `<div class="text-sm"><div class="font-semibold">${name}</div>${country}</div>`;
+}
+
+export default function MapView({ destinations }: MapViewProps) {
+  const [isMounted, setIsMounted] = useState(false);
+  const [markers, setMarkers] = useState<MarkerItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const geocodeCache = useRef<Map<string, { lat: number; lon: number } | null>>(new Map());
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerLayerRef = useRef<L.LayerGroup | null>(null);
+  const destinationList = useMemo(() => destinations, [destinations]);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted || !mapContainerRef.current || mapRef.current) {
+      return;
+    }
+
+    const container = mapContainerRef.current;
+    container.innerHTML = "";
+
+    const map = L.map(container, {
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
+      zoomControl: true,
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+
+    const markerLayer = L.layerGroup().addTo(map);
+
+    mapRef.current = map;
+    markerLayerRef.current = markerLayer;
+
+    return () => {
+      markerLayer.clearLayers();
+      map.remove();
+      markerLayerRef.current = null;
+      mapRef.current = null;
+      container.innerHTML = "";
+    };
+  }, [isMounted]);
+
+  useEffect(() => {
+    if (!mapRef.current || !markerLayerRef.current) {
+      return;
+    }
+
+    const map = mapRef.current;
+    const markerLayer = markerLayerRef.current;
+    markerLayer.clearLayers();
+
+    markers.forEach((marker) => {
+      L.circleMarker([marker.lat, marker.lon], {
+        radius: 7,
+        color: "#1d4ed8",
+      })
+        .bindPopup(buildPopupContent(marker), {
+          offset: MAP_POPUP_OFFSET,
+        })
+        .addTo(markerLayer);
+    });
+
     if (markers.length === 0) {
       map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
       return;
@@ -40,20 +122,9 @@ function AutoFit({ markers }: { markers: MarkerItem[] }) {
       return;
     }
 
-    const bounds = L.latLngBounds(markers.map((m) => [m.lat, m.lon] as L.LatLngTuple));
+    const bounds = L.latLngBounds(markers.map((marker) => [marker.lat, marker.lon] as L.LatLngTuple));
     map.fitBounds(bounds, { padding: [24, 24] });
-  }, [map, markers]);
-
-  return null;
-}
-
-export default function MapView({ destinations }: MapViewProps) {
-  const [markers, setMarkers] = useState<MarkerItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [progress, setProgress] = useState({ done: 0, total: 0 });
-  const geocodeCache = useRef<Map<string, { lat: number; lon: number } | null>>(new Map());
-  const destinationList = useMemo(() => destinations, [destinations]);
+  }, [markers]);
 
   useEffect(() => {
     let canceled = false;
@@ -68,35 +139,26 @@ export default function MapView({ destinations }: MapViewProps) {
 
       setLoading(true);
       setErrorMessage("");
+
       try {
-        const pending = destinationList.filter((d) => {
-          const key = [d.name, d.country].filter(Boolean).join(", ").trim().toLowerCase();
-          return !geocodeCache.current.has(key);
-        });
+        const pending = destinationList.filter((destination) => !geocodeCache.current.has(getDestinationKey(destination)));
         setProgress({ done: 0, total: pending.length });
 
-        for (let i = 0; i < pending.length; i += 1) {
-          const d = pending[i];
-          const key = [d.name, d.country].filter(Boolean).join(", ").trim().toLowerCase();
-          const query = [d.name, d.country].filter(Boolean).join(", ");
-          const response = await fetch(
-            `/api/gencode?q=${encodeURIComponent(query)}`
-          );
+        for (let index = 0; index < pending.length; index += 1) {
+          const destination = pending[index];
+          const key = getDestinationKey(destination);
+          const query = [destination.name, destination.country].filter(Boolean).join(", ");
+          const response = await fetch(`/api/gencode?q=${encodeURIComponent(query)}`);
 
           if (response.ok) {
             const data = await response.json();
-
             const location =
               data?.location ??
               (Array.isArray(data) && data[0]
                 ? { lat: Number(data[0].lat), lon: Number(data[0].lon) }
                 : null);
 
-            if (
-              location &&
-              Number.isFinite(location.lat) &&
-              Number.isFinite(location.lon)
-            ) {
+            if (location && Number.isFinite(location.lat) && Number.isFinite(location.lon)) {
               geocodeCache.current.set(key, location);
             } else {
               geocodeCache.current.set(key, null);
@@ -105,21 +167,24 @@ export default function MapView({ destinations }: MapViewProps) {
             geocodeCache.current.set(key, null);
           }
 
-          
-          if (!canceled) setProgress({ done: i + 1, total: pending.length });
+          if (!canceled) {
+            setProgress({ done: index + 1, total: pending.length });
+          }
 
-          if (i < pending.length - 1) {
+          if (index < pending.length - 1) {
             await new Promise((resolve) => setTimeout(resolve, GEOCODE_DELAY_MS));
           }
         }
 
         if (!canceled) {
           const results: MarkerItem[] = destinationList
-            .map((d) => {
-              const key = [d.name, d.country].filter(Boolean).join(", ").trim().toLowerCase();
-              const location = geocodeCache.current.get(key);
-              if (!location) return null;
-              return { ...d, lat: location.lat, lon: location.lon };
+            .map((destination) => {
+              const location = geocodeCache.current.get(getDestinationKey(destination));
+              if (!location) {
+                return null;
+              }
+
+              return { ...destination, lat: location.lat, lon: location.lon };
             })
             .filter((item): item is MarkerItem => item !== null);
 
@@ -132,7 +197,9 @@ export default function MapView({ destinations }: MapViewProps) {
           setErrorMessage("Failed to load map locations. Please try again.");
         }
       } finally {
-        if (!canceled) setLoading(false);
+        if (!canceled) {
+          setLoading(false);
+        }
       }
     };
 
@@ -147,24 +214,7 @@ export default function MapView({ destinations }: MapViewProps) {
     <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-6">
       <h3 className="text-base font-semibold text-gray-900 mb-3">Destination Map</h3>
       <div className="w-full rounded-lg overflow-hidden border border-gray-200" style={{ height: "520px" }}>
-        <MapContainer center={DEFAULT_CENTER} zoom={DEFAULT_ZOOM} style={{ height: "100%", width: "100%" }}>
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <AutoFit markers={markers} />
-          {markers.map((m) => (
-            <CircleMarker key={m.id} center={[m.lat, m.lon]} radius={7} pathOptions={{ color: "#1d4ed8" }}>
-              <Popup>
-                <div className="text-sm">
-                  <div className="font-semibold">{m.name}</div>
-                  {m.country && <div className="text-gray-600">{m.country}</div>}
-                </div>
-              </Popup>
-            </CircleMarker>
-          ))}
-        </MapContainer>
-      
+        {isMounted ? <div ref={mapContainerRef} className="h-full w-full" /> : <div className="h-full w-full bg-gray-50" />}
       </div>
       <p className="text-xs text-gray-500 mt-3">
         {loading
@@ -174,7 +224,6 @@ export default function MapView({ destinations }: MapViewProps) {
           : `Showing ${markers.length} location${markers.length === 1 ? "" : "s"}`}
       </p>
       {errorMessage && <p className="text-xs text-red-600 mt-2">{errorMessage}</p>}
-
     </div>
   );
 }
