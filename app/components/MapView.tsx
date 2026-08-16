@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 
 type DestinationMapItem = {
@@ -17,7 +17,6 @@ type MarkerItem = DestinationMapItem & {
 const DEFAULT_CENTER: L.LatLngTuple = [20, 0];
 const DEFAULT_ZOOM = 2;
 const GEOCODE_DELAY_MS = 1100;
-const MAP_POPUP_OFFSET: L.PointTuple = [0, -10];
 
 interface MapViewProps {
   destinations: DestinationMapItem[];
@@ -27,22 +26,23 @@ function getDestinationKey(destination: DestinationMapItem) {
   return [destination.name, destination.country].filter(Boolean).join(", ").trim().toLowerCase();
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
 function buildPopupContent(marker: MarkerItem) {
-  const name = escapeHtml(marker.name);
-  const country = marker.country
-    ? `<div style="color: #4b5563;">${escapeHtml(marker.country)}</div>`
-    : "";
+  const wrapper = document.createElement("div");
+  wrapper.style.fontSize = "0.875rem";
 
-  return `<div style="font-size: 0.875rem;"><div style="font-weight: 600;">${name}</div>${country}</div>`;
+  const name = document.createElement("div");
+  name.style.fontWeight = "600";
+  name.textContent = marker.name;
+  wrapper.appendChild(name);
+
+  if (marker.country) {
+    const country = document.createElement("div");
+    country.style.color = "#4b5563";
+    country.textContent = marker.country;
+    wrapper.appendChild(country);
+  }
+
+  return wrapper;
 }
 
 export default function MapView({ destinations }: MapViewProps) {
@@ -54,7 +54,6 @@ export default function MapView({ destinations }: MapViewProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerLayerRef = useRef<L.LayerGroup | null>(null);
-  const destinationList = useMemo(() => destinations, [destinations]);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -101,9 +100,7 @@ export default function MapView({ destinations }: MapViewProps) {
         radius: 7,
         color: "#1d4ed8",
       })
-        .bindPopup(buildPopupContent(marker), {
-          offset: MAP_POPUP_OFFSET,
-        })
+        .bindPopup(buildPopupContent(marker))
         .addTo(markerLayer);
     });
 
@@ -136,7 +133,7 @@ export default function MapView({ destinations }: MapViewProps) {
       setErrorMessage("");
 
       try {
-        const pending = destinationList.filter((destination) => !geocodeCache.current.has(getDestinationKey(destination)));
+        const pending = destinations.filter((destination) => !geocodeCache.current.has(getDestinationKey(destination)));
         setProgress({ done: 0, total: pending.length });
 
         for (let index = 0; index < pending.length; index += 1) {
@@ -172,7 +169,7 @@ export default function MapView({ destinations }: MapViewProps) {
         }
 
         if (!canceled) {
-          const results: MarkerItem[] = destinationList
+          const results: MarkerItem[] = destinations
             .map((destination) => {
               const location = geocodeCache.current.get(getDestinationKey(destination));
               if (!location) {
@@ -203,7 +200,7 @@ export default function MapView({ destinations }: MapViewProps) {
     return () => {
       canceled = true;
     };
-  }, [destinationList]);
+  }, [destinations]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-6">
