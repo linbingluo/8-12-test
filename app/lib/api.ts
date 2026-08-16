@@ -147,6 +147,15 @@ export async function getDestinations() {
   return response.json();
 }
 
+export async function getDestinationById(id: number) {
+  const response = await fetch(`${API_BASE_URL}/destinations/${id}`);
+  const data = await response.json();
+  if (!response.ok || data?.error) {
+    throw new Error(data?.error || "Failed to fetch destination");
+  }
+  return data;
+}
+
 export async function createDestination(dest: {
   name: string;
   description: string;
