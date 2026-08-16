@@ -180,16 +180,6 @@ export default function SettingsPage() {
     router.replace('/');
   };
 
-  const handleDeleteAccount = async () => {
-    if (!user) return;
-    if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
-    try {
-      await fetch(`http://localhost:8000/user/${user.id}`, { method: 'DELETE' });
-    } catch {}
-    localStorage.removeItem('user');
-    router.replace('/');
-  };
-
   if (!user) {
     return (
       <div className="flex items-center justify-center py-20 text-gray-500">Loading...</div>
@@ -316,12 +306,6 @@ export default function SettingsPage() {
                 className="border border-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
               >
                 Log Out
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                className="border border-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
-              >
-                Delete Account
               </button>
             </div>
           </div>
